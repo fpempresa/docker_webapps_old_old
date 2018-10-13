@@ -38,13 +38,14 @@ sub_help(){
     echo "    remove  <app name>  : Borrar una aplicación, Para las maquinas y borrar toda la información"
     echo "    start  <app name> <environment> : Inicia las máquinas un entorno de una aplicación "
     echo "    stop  <app name> <environment> : Para las máquina un entorno de una aplicación"
-    echo "    restart  <app name> <environment> : Reinicia las máquinas un entorno de una aplicación "
+    echo "    restart  <app name> <environment> : Reinicia las máquinas de web y database un entorno de una aplicación pero sin borrar nada "
     echo "    deploy <app name> <environment> : Compila y Despliega la aplicacion en un entorno"
     echo "    backup_database  <app name> <environment> : Backup de la base de datos de un entorno"	
     echo "    restore_database  <app name> <environment>  [DIA|MES] [<numero>] [<backup_environment>]  : Restore de la base de datos de un entorno"	
     echo "    start_jenkins <app name> <environment> : Inicia la máquina de Jenkins"
     echo "    stop_jenkins <app name> <environment> : Para la máquina de Jenkins"
-    echo "    echo msg : Imprimer un mensaje. Se usapara comprobar probar si se tiene acceso al script"
+    echo "    restart_jenkins <app name> <environment> : Reinicia la maquina sin borrar los datos"
+    echo "    delete_logs  <app name> <environment> : Imprimer un mensaje. Se usapara comprobar probar si se tiene acceso al script"
 }
 
 
@@ -115,9 +116,6 @@ fi
 
 # SubOrdenes
 
-sub_echo() {
-  echo $2
-}
 
 
 
@@ -130,12 +128,12 @@ sub_start_proxy(){
 		APP_NAME=$(echo ${APP_FILE_NAME} | sed -e "s/.app.config//")
 
     for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
-			if [ "$(docker network ls | grep  ${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
-				docker network create ${APP_NAME}-${APP_ENVIRONMENT}
+			if [ "$(docker network ls | grep  webapp-${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
+				docker network create webapp-${APP_NAME}-${APP_ENVIRONMENT}
 			fi
 
-			if [ "$(docker network inspect ${APP_NAME}-${APP_ENVIRONMENT} | grep  nginx-proxy)" == "" ]; then
-				docker network connect ${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
+			if [ "$(docker network inspect webapp-${APP_NAME}-${APP_ENVIRONMENT} | grep  nginx-proxy)" == "" ]; then
+				docker network connect webapp-${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
 			fi
 
 			if [ "$(docker network ls | grep  jenkins-${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
@@ -264,6 +262,26 @@ sub_add(){
 
 sub_remove(){
 
+DELETE_APP=""
+while [ "$DELETE_APP" == "" ]; do
+	read -s -p "¿Esta Seguro que desea borrar la aplicación con todos sus entornos? Se borrarán todos los datos (yes/otra cosa):" DELETE_APP
+done
+echo
+
+if [ "$DELETE_APP" != "yes" ]; then
+  exit 0
+fi
+DELETE_APP_NAME=""
+while [ "$DELETE_APP_NAME" == "" ]; do
+	read -s -p "Escriba el nombre de la aplicacion a borrar :" DELETE_APP_NAME
+done
+echo
+
+if [ "$DELETE_APP" != "${APP_NAME}" ]; then
+  exit 0
+fi
+
+
     set +e
     for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
       sub_stop
@@ -283,21 +301,21 @@ sub_remove(){
 
 start_database() {
 
-  if [ "$(docker network ls | grep  ${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
-    docker network create ${APP_NAME}-${APP_ENVIRONMENT}
+  if [ "$(docker network ls | grep  webapp-${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
+    docker network create webapp-${APP_NAME}-${APP_ENVIRONMENT}
   fi
 
-  if [ "$(docker network inspect ${APP_NAME}-${APP_ENVIRONMENT} | grep  nginx-proxy)" == "" ]; then
-    docker network connect ${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
+  if [ "$(docker network inspect webapp-${APP_NAME}-${APP_ENVIRONMENT} | grep  nginx-proxy)" == "" ]; then
+    docker network connect webapp-${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
   fi
 
   docker container run \
     -d \
     --name database-${APP_NAME}-${APP_ENVIRONMENT} \
     --restart always \
-    --network=${APP_NAME}-${APP_ENVIRONMENT} \
+    --network=webapp-${APP_NAME}-${APP_ENVIRONMENT} \
     --mount type=bind,source="$APP_BASE_PATH/database",destination="/var/lib/mysql" \
-    --mount type=bind,source="$APP_BASE_PATH/database_logs",destination="/var/log/mysql" \
+    --mount type=bind,source="$APP_BASE_PATH/database_logs",destination="/var/log" \
     --mount type=bind,source="$APP_BASE_PATH/database_backup",destination="/home" \
     -e TZ=Europe/Madrid \
     -e MYSQL_ROOT_PASSWORD=root \
@@ -330,12 +348,12 @@ load_project_properties
   fi
 
 
-  if [ "$(docker network ls | grep  ${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
-    docker network create ${APP_NAME}-${APP_ENVIRONMENT}
+  if [ "$(docker network ls | grep  webapp-${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
+    docker network create webapp-${APP_NAME}-${APP_ENVIRONMENT}
   fi
 
-  if [ "$(docker network inspect ${APP_NAME}-${APP_ENVIRONMENT} | grep  nginx-proxy)" == "" ]; then
-    docker network connect ${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
+  if [ "$(docker network inspect webapp-${APP_NAME}-${APP_ENVIRONMENT} | grep  nginx-proxy)" == "" ]; then
+    docker network connect webapp-${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
   fi
 
 
@@ -355,7 +373,7 @@ load_project_properties
     --name tomcat-${APP_NAME}-${APP_ENVIRONMENT} \
     --expose 8080 \
     --restart always \
-    --network=${APP_NAME}-${APP_ENVIRONMENT} \
+    --network=webapp-${APP_NAME}-${APP_ENVIRONMENT} \
     --mount type=bind,source="$APP_BASE_PATH/web_app",destination="/usr/local/tomcat/webapps" \
     --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/usr/local/tomcat/logs" \
     -e TZ=Europe/Madrid \
@@ -462,7 +480,9 @@ sub_start_jenkins() {
     --mount type=bind,source="$APP_BASE_PATH/jenkins",destination="/var/jenkins_home" \
     --mount type=bind,source="$BASE_PATH/var/pipe_send_to_server_command",destination="/opt/jenkins_pipe/pipe_send_to_server_command" \
     --mount type=bind,source="$APP_BASE_PATH/pipe_response_from_server_command",destination="/opt/jenkins_pipe/pipe_response_from_server_command" \
-    --mount type=bind,source="$BASE_PATH/bin/private/docker_host_comm/print_pipe",destination="/opt/jenkins_pipe/docker_host_comm/print_pipe" \
+    --mount type=bind,source="$BASE_PATH/bin/private/docker_host_comm/print_pipe",destination="/opt/jenkins_pipe/print_pipe" \
+    --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/var/jenkins_home/userContent/web_logs" \
+    --mount type=bind,source="$APP_BASE_PATH/database_logs",destination="/var/jenkins_home/userContent/database_logs" \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
     -e VIRTUAL_PORT=8080 \
@@ -520,7 +540,7 @@ sub_start_jenkins() {
     echo "<?xml version='1.1' encoding='UTF-8'?>" > jenkins.model.JenkinsLocationConfiguration.xml
     echo "<jenkins.model.JenkinsLocationConfiguration>" >> jenkins.model.JenkinsLocationConfiguration.xml
     echo "  <adminAddress>${APP_NAME}-${APP_ENVIRONMENT}-Jenkins &lt;${SERVICES_MASTER_EMAIL}&gt;</adminAddress>" >> jenkins.model.JenkinsLocationConfiguration.xml
-    echo "  <jenkinsUrl>${VIRTUAL_HOST}</jenkinsUrl>" >> jenkins.model.JenkinsLocationConfiguration.xml
+    echo "  <jenkinsUrl>http://${VIRTUAL_HOST}</jenkinsUrl>" >> jenkins.model.JenkinsLocationConfiguration.xml
     echo "</jenkins.model.JenkinsLocationConfiguration>" >> jenkins.model.JenkinsLocationConfiguration.xml
 
     sed -i "s/<hudsonUrl><\/hudsonUrl>/<hudsonUrl>${VIRTUAL_HOST}<\/hudsonUrl>/g" hudson.tasks.Mailer.xml
@@ -792,7 +812,13 @@ popd
 
 }
 
-
+sub_delete_logs() {
+  check_app_name_environment_arguments
+	echo "" > $(docker inspect --format='{{.LogPath}}' database-${APP_NAME}-${APP_ENVIRONMENT})
+	echo "" > $(docker inspect --format='{{.LogPath}}' tomcat-${APP_NAME}-${APP_ENVIRONMENT})
+	echo "" > $(docker inspect --format='{{.LogPath}}' jenkins-${APP_NAME}-${APP_ENVIRONMENT})
+  rm -rf $APP_BASE_PATH/web_logs/*
+}
 
 subcommand=$1
 case $subcommand in

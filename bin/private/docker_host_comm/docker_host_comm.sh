@@ -6,7 +6,7 @@ ABSPATH=$(readlink -f $0)
 ABSDIR=$(dirname $ABSPATH)
 
 
-BASE_PATH=$ABSDIR/../..
+BASE_PATH=$ABSDIR/../../..
 
 PIPE=$BASE_PATH/var/pipe_send_to_server_command
 
@@ -35,7 +35,7 @@ do
 	APP_BASE_PATH=$BASE_PATH/apps/$APP_NAME/$APP_ENVIRONMENT
 	RESPONSE_PIPE=$APP_BASE_PATH/pipe_response_from_server_command
 
-	if [ ! -f $BASE_PATH/config/${APP_NAME}.app ]; then
+	if [ ! -f $BASE_PATH/config/${APP_NAME}.app.config ]; then
 		echo "error: No existe el fichero de configuracion de la aplicacion" 
                 continue;
 
