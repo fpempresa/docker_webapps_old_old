@@ -1,0 +1,16 @@
+docker stop $(docker ps -a -q)
+docker rm $(docker ps -a -q)
+docker rmi $(docker images -q)
+zip -j  docker_images.zip *.docker.img.tar
+unzip -t docker_images.zip
+split --bytes=45m docker_images.zip docker_images_
+cat docker_images_* > docker_images.zip
+unzip -t docker_images.zip
+unzip  docker_images.zip
+for IMAGE_NAME in $(ls *.docker.img.tar); do docker image load  -i $IMAGE_NAME; done
+
+
+
+docker image save -o jrcs.letsencrypt-nginx-proxy-companion.v1.9.1.docker.img.tar jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
+
+

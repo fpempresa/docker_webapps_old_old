@@ -1,0 +1,8 @@
+config/*
+!config/.gitkeep
+apps/*
+!apps/.gitkeep
+var/*
+!var/.gitkeep
+tmp/*
+!tmp/.gitkeep
