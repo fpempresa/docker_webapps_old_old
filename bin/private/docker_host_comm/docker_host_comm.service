@@ -1,5 +1,5 @@
 [Unit]
-Description=Jenkis Docker Host Communication
+Description=Docker Host Communication
 After=network.target
 StartLimitIntervalSec=0
 [Service]
@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/opt/docker_webapps/bin/private/pipe_command_server.sh
+ExecStart=/opt/docker_webapps/bin/private/docker_host_comm/docker_host_comm.sh
 
 [Install]
 WantedBy=multi-user.target

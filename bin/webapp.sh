@@ -462,7 +462,7 @@ sub_start_jenkins() {
     --mount type=bind,source="$APP_BASE_PATH/jenkins",destination="/var/jenkins_home" \
     --mount type=bind,source="$BASE_PATH/var/pipe_send_to_server_command",destination="/opt/jenkins_pipe/pipe_send_to_server_command" \
     --mount type=bind,source="$APP_BASE_PATH/pipe_response_from_server_command",destination="/opt/jenkins_pipe/pipe_response_from_server_command" \
-    --mount type=bind,source="$BASE_PATH/bin/private/print_pipe",destination="/opt/jenkins_pipe/print_pipe" \
+    --mount type=bind,source="$BASE_PATH/bin/private/docker_host_comm/print_pipe",destination="/opt/jenkins_pipe/docker_host_comm/print_pipe" \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
     -e VIRTUAL_PORT=8080 \

@@ -11,21 +11,40 @@ ABSDIR=$(dirname $ABSPATH)
 
 BASE_PATH=$ABSDIR/..
 
-if [ "$1" == "" ] || [ "$2" == "" ] || [ "$3" == "" ]; then
-  echo "uso: ${ProgName} <default_login> <default_password> <dominio_sistem_monitorizacion>" 
+DEFAULT_LOGIN=""
+while [ "$DEFAULT_LOGIN" == "" ]; do
+	read -p "Usuario para los servicios generales(Ej: Servicio de Monitorizacion):" DEFAULT_LOGIN
+done
+
+DEFAULT_PASSWORD=""
+while [ "$DEFAULT_PASSWORD" == "" ]; do
+	read -s -p "Contraseña del usuario $DEFAULT_LOGIN:" DEFAULT_PASSWORD
+done
+echo
+
+REPEAT_DEFAULT_PASSWORD=""
+while [ "$REPEAT_DEFAULT_PASSWORD" == "" ]; do
+	read -s -p "Repite la contraseña:" REPEAT_DEFAULT_PASSWORD
+done
+echo
+
+if [ "$DEFAULT_PASSWORD" != "$REPEAT_DEFAULT_PASSWORD" ]; then
+	echo las contraseñas no coinciden
+  exit 1
 fi
 
-DEFAULT_LOGIN=$1
-DEFAULT_PASSWORD=$2
-DOMAIN_NAME_MONITOR=$3
+DOMAIN_NAME_MONITOR=""
+while [ "$DOMAIN_NAME_MONITOR" == "" ]; do 
+	read -p "Dominio del sistema de monitorizacion(Ej: monitor.midominio.com):" DOMAIN_NAME_MONITOR
+done
 
-apt update && apt -y upgrade
+apt -y update && apt -y upgrade
 
 #Software basico
 apt install -y apache2-utils zip unzip curl
 
 #Docker
-apt install $BASE_PATH/bin/private/docker/docker-ce_18.06.1~ce~3-0~ubuntu_amd64.deb
+apt install -y $BASE_PATH/bin/private/docker/docker-ce_18.06.1~ce~3-0~ubuntu_amd64.deb
 
 
 
@@ -47,11 +66,11 @@ echo "DEFAULT_PASSWORD=${DEFAULT_PASSWORD}" >> $BASE_PATH/config/global.config
 echo "DOMAIN_NAME_MONITOR=${DOMAIN_NAME_MONITOR}" >> $BASE_PATH/config/global.config
 
 #Crear el servicio
-cp $BASE_PATH/bin/private/jenkins_host_comm.service /lib/systemd/system
+cp $BASE_PATH/bin/private/docker_host_comm/docker_host_comm.service /lib/systemd/system
 #Poner bien la ruta
-sed -i "s/ExecStart=/opt/ExecStart=$BASE_PATH/g" /lib/systemd/system/jenkins_host_comm.service
-systemctl start jenkins_host_comm.service
-systemctl enable jenkins_host_comm.service
+sed -i "s/ExecStart=\/opt\/docker_webapps/ExecStart=$(echo $BASE_PATH | sed s/\\//\\\\\\//g)/g" /lib/systemd/system/docker_host_comm.service
+systemctl start docker_host_comm.service
+systemctl enable docker_host_comm.service
 
 #Iniciar el proxy
 $BASE_PATH/bin/webapp.sh start_proxy
