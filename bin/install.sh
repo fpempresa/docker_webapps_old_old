@@ -42,9 +42,16 @@ done
 rm docker_images.zip
 popd
 
-echo "DEFAULT_LOGIN=${DEFAULT_LOGIN}" >> $BASE_PATH/config/global.config
+echo "DEFAULT_LOGIN=${DEFAULT_LOGIN}" > $BASE_PATH/config/global.config
 echo "DEFAULT_PASSWORD=${DEFAULT_PASSWORD}" >> $BASE_PATH/config/global.config
-echo "DOMAIN_NAME_MONITOR=${DOMAIN_NAME_MONITOR}" > $BASE_PATH/config/global.config
+echo "DOMAIN_NAME_MONITOR=${DOMAIN_NAME_MONITOR}" >> $BASE_PATH/config/global.config
+
+#Crear el servicio
+cp $BASE_PATH/bin/private/jenkins_host_comm.service /lib/systemd/system
+#Poner bien la ruta
+sed -i "s/ExecStart=/opt/ExecStart=$BASE_PATH/g" /lib/systemd/system/jenkins_host_comm.service
+systemctl start jenkins_host_comm.service
+systemctl enable jenkins_host_comm.service
 
 #Iniciar el proxy
 $BASE_PATH/bin/webapp.sh start_proxy

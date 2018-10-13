@@ -1,0 +1,13 @@
+[Unit]
+Description=Jenkis Docker Host Communication
+After=network.target
+StartLimitIntervalSec=0
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/opt/docker_webapps/bin/private/pipe_command_server.sh
+
+[Install]
+WantedBy=multi-user.target
