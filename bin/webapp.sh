@@ -323,6 +323,7 @@ fi
       docker network disconnect ${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
       docker network rm ${APP_NAME}-${APP_ENVIRONMENT}
     done
+	 set -e
     rm -rf $BASE_PATH/apps/$APP_NAME
     rm -f $BASE_PATH/config/$APP_NAME.app.config
 
