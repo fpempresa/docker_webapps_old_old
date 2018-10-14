@@ -390,7 +390,7 @@ load_project_properties
   fi
 
 
-  if [ "$SOFT_START" == "" ]; then
+  if [ "$SOFT_START" == "" ] || [ -z "$(ls -A $APP_BASE_PATH/web_app)" ] ; then
 
       rm -rf $APP_BASE_PATH/web_app/*
       #Crear la app ROOT por defecto

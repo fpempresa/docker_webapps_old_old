@@ -13,6 +13,7 @@ PIPE=$BASE_PATH/var/pipe_send_to_server_command
 
   if [[ ! -p "$PIPE" ]]; then
     mkfifo "$PIPE"
+    chmod ugo+rw $PIPE
   fi
 
 
