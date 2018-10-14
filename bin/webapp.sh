@@ -498,7 +498,7 @@ sub_start_jenkins() {
   docker stop jenkins-${APP_NAME}-${APP_ENVIRONMENT}
 
   #Volver a copiar siempre los Jobs por si hay alguno nuevo
-  cp -r $BASE_PATH/bin/private/jenkins/jobs/* $APP_BASE_PATH/jenkins/jobs
+  cp -r $BASE_PATH/bin/private/jenkins/jobs $APP_BASE_PATH/jenkins
 
   for job in $( ls $APP_BASE_PATH/jenkins/jobs ); do
     if [ ! -f $APP_BASE_PATH/jenkins/jobs/${job}/nextBuildNumber ]; then
