@@ -396,7 +396,7 @@ load_project_properties
       #Crear la app ROOT por defecto
       mkdir -p $APP_BASE_PATH/web_app/ROOT/{META-INF,WEB-INF}
       echo "<html><body>La aplicacion '${APP_NAME}' en el entorno de '${APP_ENVIRONMENT}' aun no esta instalada</body></html>" > $APP_BASE_PATH/web_app/ROOT/index.html
-      echo '<?xml version="1.0" encoding="UTF-8"?><Context path="/"/>' > $APP_BASE_PATH/web_app/ROOT/META-INF/context.xml
+      echo '<?xml version="1.0" encoding="UTF-8"?><Context path=""/>' > $APP_BASE_PATH/web_app/ROOT/META-INF/context.xml
       find $APP_BASE_PATH/web_app -type d -exec chmod 777 {} \;
       find $APP_BASE_PATH/web_app -type f -exec chmod 666 {} \;
   fi
