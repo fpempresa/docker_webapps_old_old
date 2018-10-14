@@ -825,6 +825,11 @@ chmod ugo+rx dist.sh
 
 popd
 
+  set +e
+	docker container stop dist-${APP_NAME}-${APP_ENVIRONMENT}
+	docker container rm dist-${APP_NAME}-${APP_ENVIRONMENT}
+  set -e
+
   docker run \
   --name dist-${APP_NAME}-${APP_ENVIRONMENT} \
   --mount type=bind,source="$APP_BASE_PATH/dist",destination="/opt/dist" \
