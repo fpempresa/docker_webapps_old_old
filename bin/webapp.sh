@@ -34,8 +34,8 @@ sub_help(){
     echo "    stop_proxy : Para el proxy y sus dependencias (monitor,certificadoss,etc)."
     echo "    restart_proxy : Reinicia el proxy y sus dependencias (monitor,certificadoss,etc)."
     echo "    restart_all : Reinicia el proxy y el resto de las aplicaciones web y jenkins qu estubieran arrancadas"
-    echo "    add  <app name> <url git private> : Añade una aplicacion y todos sus entornos. Pero no inicia las maquinas"
-    echo "    remove  <app name>  : Borrar una aplicación, Para las maquinas y borrar toda la información"
+    echo "    add   : Añade una aplicacion y todos sus entornos. Pero no inicia las maquinas"
+    echo "    remove   : Borrar una aplicación, Para las maquinas y borrar toda la información"
     echo "    start  <app name> <environment> : Inicia las máquinas un entorno de una aplicación "
     echo "    stop  <app name> <environment> : Para las máquina un entorno de una aplicación"
     echo "    restart  <app name> <environment> : Reinicia las máquinas de web y database un entorno de una aplicación pero sin borrar nada "
@@ -178,6 +178,7 @@ sub_start_proxy(){
     -logtostderr --http_auth_file /home/cadvisor/auth.htpasswd --http_auth_realm $DOMAIN_NAME_MONITOR
  
 
+   echo "Proxy arrancado"
 }
 
 sub_stop_proxy(){
@@ -188,6 +189,7 @@ sub_stop_proxy(){
   docker container stop cadvisor 
   docker container rm cadvisor 
 
+   echo "Proxy parado"
 }
 
 sub_restart_proxy(){
@@ -229,6 +231,21 @@ sub_restart_all(){
 
 
 sub_add(){
+
+	APP_NAME=""
+	while [ "$APP_NAME" == "" ]; do
+		read  -p "Nombre de la aplicacion:" APP_NAME
+	done
+
+
+
+	GIT_REPOSITORY_PRIVATE=""
+	while [ "$GIT_REPOSITORY_PRIVATE" == "" ]; do
+		read  -p "URL Git con las propiedades de la aplicación  :" GIT_REPOSITORY_PRIVATE
+	done
+
+
+
     if [ -d $BASE_PATH/apps/$APP_NAME ]; then
        echo "Ya existe la carpeta de la aplicación"
        exit 1
@@ -250,37 +267,52 @@ sub_add(){
     find $BASE_PATH/apps/$APP_NAME -type f -exec chmod 666 {} \;
 
     #Guardar la URL del repositorio de Git de private
-    echo GIT_REPOSITORY_PRIVATE=$(echo $3 | sed "s/\\$/\\\\\$/g") > $BASE_PATH/config/$APP_NAME.app.config
+    echo GIT_REPOSITORY_PRIVATE=$(echo $GIT_REPOSITORY_PRIVATE | sed "s/\\$/\\\\\$/g") > $BASE_PATH/config/$APP_NAME.app.config
     for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
     	echo "${APP_ENVIRONMENT}_ENABLE_WEBAPP=0" >> $BASE_PATH/config/$APP_NAME.app.config
     	echo "${APP_ENVIRONMENT}_ENABLE_JENKINS=0" >> $BASE_PATH/config/$APP_NAME.app.config
     done
 
-
+	echo "Aplicacion añadida"
     
 }
 
 sub_remove(){
 
-DELETE_APP=""
-while [ "$DELETE_APP" == "" ]; do
-	read -s -p "¿Esta Seguro que desea borrar la aplicación con todos sus entornos? Se borrarán todos los datos (yes/otra cosa):" DELETE_APP
-done
-echo
 
-if [ "$DELETE_APP" != "yes" ]; then
-  exit 0
-fi
+
 DELETE_APP_NAME=""
 while [ "$DELETE_APP_NAME" == "" ]; do
-	read -s -p "Escriba el nombre de la aplicacion a borrar :" DELETE_APP_NAME
+	read  -p "Escriba el nombre de la aplicacion a borrar :" DELETE_APP_NAME
 done
-echo
 
-if [ "$DELETE_APP" != "${APP_NAME}" ]; then
+
+REPEAT_DELETE_APP_NAME=""
+while [ "$REPEAT_DELETE_APP_NAME" == "" ]; do
+	read  -p "Vuelva a escribir el nombre de la aplicacion :" REPEAT_DELETE_APP_NAME
+done
+
+
+
+if [ "$DELETE_APP_NAME" != "${REPEAT_DELETE_APP_NAME}" ]; then
+	echo "El nombre de la aplicacion no coincide"
   exit 0
 fi
 
+
+YES_DELETE_APP=""
+while [ "$YES_DELETE_APP" == "" ]; do
+	read  -p "¿Esta Seguro que desea borrar la aplicación con todos sus entornos? Se borrarán todos los datos (yes/otra cosa):" YES_DELETE_APP
+done
+echo
+
+if [ "$YES_DELETE_APP" != "yes" ]; then
+  echo "No se borró la aplicacion. La respues no fue 'yes'"
+  exit 0
+fi
+
+
+    APP_NAME=$DELETE_APP_NAME
 
     set +e
     for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
@@ -294,7 +326,7 @@ fi
     rm -rf $BASE_PATH/apps/$APP_NAME
     rm -f $BASE_PATH/config/$APP_NAME.app.config
 
-
+   echo "Aplicacion Borrada"
 
 }
 
@@ -328,7 +360,7 @@ start_database() {
 
   echo "Esperando a que arranque la base de datos..."
   sleep 10
-
+   echo "Base de datos arrancada"
 }
 
 
@@ -379,6 +411,8 @@ load_project_properties
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
     tomcat:7.0.91-jre7
+
+   echo "Web App arrancada"
 }
 
 
@@ -653,6 +687,7 @@ sub_restore_database(){
   
   sub_restart
 
+     echo "Restore database completado"
 }
 
 sub_backup_database(){
@@ -733,7 +768,7 @@ if [ "$FTP_RET_CODE" == "1" ]; then
 fi
 
 
-echo Fichero Subido
+echo "Backu database completado y subido"
 
 }
 
@@ -810,6 +845,7 @@ popd
   SOFT_START=1
   sub_start
 
+   echo "Deploy completado"
 }
 
 sub_delete_logs() {
@@ -818,6 +854,8 @@ sub_delete_logs() {
 	echo "" > $(docker inspect --format='{{.LogPath}}' tomcat-${APP_NAME}-${APP_ENVIRONMENT})
 	echo "" > $(docker inspect --format='{{.LogPath}}' jenkins-${APP_NAME}-${APP_ENVIRONMENT})
   rm -rf $APP_BASE_PATH/web_logs/*
+
+   echo "Logs borrados"
 }
 
 subcommand=$1
