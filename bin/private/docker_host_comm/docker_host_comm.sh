@@ -10,6 +10,7 @@ BASE_PATH=$ABSDIR/../../..
 
 PIPE=$BASE_PATH/var/pipe_send_to_server_command
 
+cd $BASE_PATH
 
   if [[ ! -p "$PIPE" ]]; then
     mkfifo "$PIPE"
@@ -86,6 +87,8 @@ do
 
 
         sleep 3
+
+        git pull
 	
 	$BASE_PATH/bin/webapp.sh "$COMMAND" "$APP_NAME" "$APP_ENVIRONMENT" $PERIODO $NUMERO $REAL_FILE_ENVIRONMENT |& tr -cd "[:print:]\n\t" &>  $RESPONSE_PIPE
         RESULT=${PIPESTATUS[0]}
