@@ -64,8 +64,8 @@ do
 		echo "#_#_#_# ERROR 1 #_#_#_#" > $RESPONSE_PIPE 
 		continue;
 	fi
-
-	if [ -z "$(echo $VALID_COMMANDS | grep -o " ${COMMAND} " | tr -d ' ')" ]; then
+ 
+	if [ -z "$(echo $VALID_COMMANDS | grep -E -o "( |^)${COMMAND}( |$)" | tr -d ' ')" ]; then
 		echo "La orden no está permitida" > $RESPONSE_PIPE 
 		echo "#_#_#_# ERROR 1 #_#_#_#" > $RESPONSE_PIPE 
 		continue;
