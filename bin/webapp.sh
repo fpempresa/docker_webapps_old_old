@@ -571,7 +571,7 @@ sub_start_jenkins() {
 	  rm -rf $APP_BASE_PATH/jenkins/*
   fi
 
-  SECRET_KEY=$(openssl rand 64 | base32)
+  SECRET_KEY=$(openssl rand 64 | base32 |  tr -d '\n' )
 
   docker container run \
     -d \
