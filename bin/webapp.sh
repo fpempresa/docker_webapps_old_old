@@ -39,12 +39,14 @@ sub_help(){
     echo "    start  <app name> <environment> : Inicia las máquinas un entorno de una aplicación "
     echo "    stop  <app name> <environment> : Para las máquina un entorno de una aplicación"
     echo "    restart  <app name> <environment> : Reinicia las máquinas de web y database un entorno de una aplicación pero sin borrar nada "
+    echo "    restart_hard  <app name> <environment> : Reinicia las máquinas de web y database de un entorno de una aplicación pero borrando la base de datos y la aplicacion "
     echo "    deploy <app name> <environment> : Compila y Despliega la aplicacion en un entorno"
     echo "    backup_database  <app name> <environment> : Backup de la base de datos de un entorno"	
     echo "    restore_database  <app name> <environment>  [DIA|MES] [<numero>] [<backup_environment>]  : Restore de la base de datos de un entorno"	
     echo "    start_jenkins <app name> <environment> : Inicia la máquina de Jenkins"
     echo "    stop_jenkins <app name> <environment> : Para la máquina de Jenkins"
     echo "    restart_jenkins <app name> <environment> : Reinicia la maquina sin borrar los datos"
+    echo "    restart_hard_jenkins <app name> <environment> : Reinicia la maquina borrando todos los datos"
     echo "    delete_logs  <app name> <environment> : Imprimer un mensaje. Se usapara comprobar probar si se tiene acceso al script"
 }
 
@@ -367,7 +369,11 @@ start_database() {
 
   echo "Esperando a que arranque la base de datos..."
   sleep 10
-   echo "Base de datos arrancada"
+
+  #Para que Jenkins tenga permisos en el log
+  chmod ugo+r $APP_BASE_PATH/database_logs/mysqld.log
+
+  echo "Base de datos arrancada"
 }
 
 
@@ -396,7 +402,13 @@ load_project_properties
   fi
 
 
-  if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/web_app)" ] ; then
+  if [ "$HARD_START" == "1" ]; then
+      rm -rf $APP_BASE_PATH/web_app/*
+      rm -rf $APP_BASE_PATH/web_logs/*
+  fi
+
+  #Si no hay nada creamos una aplicación por defecto
+  if [ -z "$(ls -A $APP_BASE_PATH/web_app)" ]; then
 
       rm -rf $APP_BASE_PATH/web_app/*
       #Crear la app ROOT por defecto
