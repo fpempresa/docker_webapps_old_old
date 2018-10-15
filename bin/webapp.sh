@@ -138,13 +138,13 @@ sub_start_proxy(){
       -p 80:80 \
       -p 443:443 	\
 			--restart always \
-			-e TZ=Europe/Madrid 
+			-e TZ=Europe/Madrid \
 			-v $BASE_PATH/var/certs:/etc/nginx/certs:ro \
 			-v /etc/nginx/vhost.d \
 			-v /usr/share/nginx/html \
-			-v /var/run/docker.sock:/tmp/docker.sock:ro 
+			-v /var/run/docker.sock:/tmp/docker.sock:ro \
 		  --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy \
-			--name nginx-proxy 
+			--name nginx-proxy \
 			jwilder/nginx-proxy:0.7.0
 
 
@@ -206,12 +206,14 @@ sub_start_proxy(){
   	-v $BASE_PATH/var/certs:/etc/nginx/certs:rw \
   	-v /var/run/docker.sock:/var/run/docker.sock:ro \
   	--volumes-from nginx-proxy \
-  	jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
+	--name letsencript \
+	jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
 
    echo "Proxy arrancado"
 }
 
 sub_stop_proxy(){
+	set +e
   docker container stop nginx-proxy 
   docker container rm nginx-proxy 
 
@@ -219,7 +221,11 @@ sub_stop_proxy(){
   docker container stop cadvisor 
   docker container rm cadvisor 
 
+  docker container stop letsencript
+  docker container rm letsencript
+
    echo "Proxy parado"
+   set -e
 }
 
 sub_restart_proxy(){
@@ -451,15 +457,13 @@ load_project_properties
     -d \
     --name tomcat-${APP_NAME}-${APP_ENVIRONMENT} \
     --expose 8080 \
-    --expose 8443 \
     --restart always \
     --network=webapp-${APP_NAME}-${APP_ENVIRONMENT} \
     --mount type=bind,source="$APP_BASE_PATH/web_app",destination="/usr/local/tomcat/webapps" \
     --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/usr/local/tomcat/logs" \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
-		-e VIRTUAL_PROTO=https \
-		-e VIRTUAL_PORT=8443 \
+    -e VIRTUAL_PORT=8080 \
     -e LETSENCRYPT_HOST=$VIRTUAL_HOST \
     -e LETSENCRYPT_EMAIL=${SERVICES_MASTER_EMAIL} \
     tomcat:7.0.91-jre7
