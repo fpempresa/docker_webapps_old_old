@@ -371,7 +371,7 @@ start_database() {
   sleep 10
 
   #Para que Jenkins tenga permisos en el log
-  chmod ugo+r $APP_BASE_PATH/database_logs/mysqld.log
+  chmod ugo+r $APP_BASE_PATH/database_logs/*.log
 
   echo "Base de datos arrancada"
 }
