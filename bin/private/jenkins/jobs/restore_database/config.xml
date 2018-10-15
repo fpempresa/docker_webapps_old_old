@@ -14,7 +14,7 @@
   <builders>
     <hudson.tasks.Shell>
       <command>COMMAND=restore_database
-echo $SECRET_KEY $COMMAND $APP_NAME $APP_ENVIRONMENT  &gt; /opt/jenkins_pipe/pipe_send_to_server_command
+echo $COMMAND $SECRET_KEY $APP_NAME $APP_ENVIRONMENT  &gt; /opt/jenkins_pipe/pipe_send_to_server_command
 #Ejemplo de otro dia: echo $SECRET_KEY $COMMAND $APP_NAME $APP_ENVIRONMENT DIA 4 PRODUCCION &gt; /opt/jenkins_pipe/pipe_send_to_server_command
 /opt/jenkins_pipe/print_pipe /opt/jenkins_pipe/pipe_response_from_server_command &quot;#_#_#_#&quot;</command>
     </hudson.tasks.Shell>
