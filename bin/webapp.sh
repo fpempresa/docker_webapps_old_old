@@ -571,6 +571,8 @@ sub_start_jenkins() {
 	  rm -rf $APP_BASE_PATH/jenkins/*
   fi
 
+  SECRET_KEY=$(openssl rand 64 | base32)
+
   docker container run \
     -d \
     --name jenkins-${APP_NAME}-${APP_ENVIRONMENT} \
@@ -590,6 +592,9 @@ sub_start_jenkins() {
     -e APP_NAME=${APP_NAME} \
     -e APP_ENVIRONMENT=${APP_ENVIRONMENT} \
     -e SERVICES_MASTER_EMAIL=${SERVICES_MASTER_EMAIL} \
+    -e LETSENCRYPT_HOST=$VIRTUAL_HOST \
+    -e LETSENCRYPT_EMAIL=${SERVICES_MASTER_EMAIL} \
+    -e SECRET_KEY=$SECRET_KEY \
     jenkins/jenkins:2.144
 
     #Esperar a que arranque y haga todo el sistema de directorios
@@ -657,7 +662,15 @@ sub_start_jenkins() {
 
 docker start jenkins-${APP_NAME}-${APP_ENVIRONMENT}
 
+	if [ -z "$(cat $BASE_PATH/config/$APP_NAME.app.config| grep ^${APP_ENVIRONMENT}_SECRET_KEY=)" ]; then
+		echo ${APP_ENVIRONMENT}_SECRET_KEY=$SECRET_KEY >> $BASE_PATH/config/$APP_NAME.app.config
+  else 
+		sed -i "s/${APP_ENVIRONMENT}_SECRET_KEY=.*/${APP_ENVIRONMENT}_SECRET_KEY=$SECRET_KEY/g" $BASE_PATH/config/$APP_NAME.app.config
+  fi
+
 	sed -i "s/${APP_ENVIRONMENT}_ENABLE_JENKINS=.*/${APP_ENVIRONMENT}_ENABLE_JENKINS=1/g" $BASE_PATH/config/$APP_NAME.app.config
+
+
 
   echo "Arrancado Jenkins ${APP_NAME}-${APP_ENVIRONMENT}"
 }

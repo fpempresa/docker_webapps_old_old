@@ -10,6 +10,9 @@ BASE_PATH=$ABSDIR/../../..
 
 PIPE=$BASE_PATH/var/pipe_send_to_server_command
 
+#Estos son las unicas ordenes que se permiten
+VALID_COMMANDS="backup_database restore_database deploy delete_logs restart restart_hard"
+
 cd $BASE_PATH
 
   if [[ ! -p "$PIPE" ]]; then
@@ -30,12 +33,14 @@ do
 	echo $line
 
         arguments=( $line )
-	COMMAND=${arguments[0]}
-	APP_NAME=${arguments[1]}
-	APP_ENVIRONMENT=${arguments[2]}
+        SECRET_KEY=${arguments[0]}
+	COMMAND=${arguments[1]}
+	APP_NAME=${arguments[2]}
+	APP_ENVIRONMENT=${arguments[3]}
 
 	APP_BASE_PATH=$BASE_PATH/apps/$APP_NAME/$APP_ENVIRONMENT
 	RESPONSE_PIPE=$APP_BASE_PATH/pipe_response_from_server_command
+
 
 	if [ ! -f $BASE_PATH/config/${APP_NAME}.app.config ]; then
 		echo "error: No existe el fichero de configuracion de la aplicacion" 
@@ -47,10 +52,30 @@ do
 		continue;
 	fi
 
+	STORED_SECRET_KEY=$(cat $BASE_PATH/config/${APP_NAME}.app.config | grep "^${APP_ENVIRONMENT}_SECRET_KEY=" | cut -d "=" -f2)
+	if [ -z "$STORED_SECRET_KEY" ]; then
+		echo "No existe clave secreta en el fichero de configuracion" > $RESPONSE_PIPE 
+		echo "#_#_#_# ERROR 1 #_#_#_#" > $RESPONSE_PIPE 
+		continue;
+	fi
+	
+	if [ "$SECRET_KEY" != "$STORED_SECRET_KEY" ]; then
+		echo "La clave secreta no es valida" > $RESPONSE_PIPE 
+		echo "#_#_#_# ERROR 1 #_#_#_#" > $RESPONSE_PIPE 
+		continue;
+	fi
+
+	if [ -z "$(echo $VALID_COMMANDS | grep -o ' ${COMMAND} ' | tr -d ' ')" ]; then
+		echo "La orden no está permitida" > $RESPONSE_PIPE 
+		echo "#_#_#_# ERROR 1 #_#_#_#" > $RESPONSE_PIPE 
+		continue;
+	fi
+
+
 	if [ "$COMMAND" == "restore_database" ]; then
-		PERIODO=${arguments[3]}
-		NUMERO=${arguments[4]}
-		REAL_FILE_ENVIRONMENT=${arguments[5]}
+		PERIODO=${arguments[4]}
+		NUMERO=${arguments[5]}
+		REAL_FILE_ENVIRONMENT=${arguments[6]}
 
 		if [ "$PERIODO" != "" ] && [ "$PERIODO" != "DIA" ] && [ "$PERIODO" != "MES" ]; then
 			echo "El periodo no es valido" > $RESPONSE_PIPE 

@@ -50,7 +50,7 @@ if [ &quot;$CONFIRM_DELETE&quot; != &quot;yes&quot; ]; then
 fi
 
 COMMAND=restart_hard
-echo $COMMAND $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe_send_to_server_command
+echo $SECRET_KEY $COMMAND $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe_send_to_server_command
 /opt/jenkins_pipe/print_pipe /opt/jenkins_pipe/pipe_response_from_server_command &quot;#_#_#_#&quot;</command>
     </hudson.tasks.Shell>
   </builders>
