@@ -585,7 +585,6 @@ sub_start_jenkins() {
     --mount type=bind,source="$BASE_PATH/bin/private/docker_host_comm/print_pipe",destination="/opt/jenkins_pipe/print_pipe" \
     --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/var/jenkins_home/userContent/web_logs" \
     --mount type=bind,source="$APP_BASE_PATH/database_logs",destination="/var/jenkins_home/userContent/database_logs" \
-    --mount type=bind,source="$APP_BASE_PATH/jenkins/logs",destination="/var/jenkins_home/userContent/jenkins_logs" \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
     -e VIRTUAL_PORT=8080 \
