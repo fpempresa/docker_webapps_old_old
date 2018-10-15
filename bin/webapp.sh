@@ -33,20 +33,26 @@ sub_help(){
     echo "    start_proxy : Inicia el proxy y sus dependencias (monitor,certificadoss,etc)."
     echo "    stop_proxy : Para el proxy y sus dependencias (monitor,certificadoss,etc)."
     echo "    restart_proxy : Reinicia el proxy y sus dependencias (monitor,certificadoss,etc)."
-    echo "    restart_all : Reinicia el proxy y el resto de las aplicaciones web y jenkins qu estubieran arrancadas"
+    echo "    restart_all : Reinicia el proxy y el resto de las aplicaciones web y jenkins que estubieran arrancadas"
+		echo ""
     echo "    add   : Añade una aplicacion y todos sus entornos. Pero no inicia las maquinas"
     echo "    remove   : Borrar una aplicación, Para las maquinas y borrar toda la información"
+		echo ""
     echo "    start  <app name> <environment> : Inicia las máquinas un entorno de una aplicación "
     echo "    stop  <app name> <environment> : Para las máquina un entorno de una aplicación"
     echo "    restart  <app name> <environment> : Reinicia las máquinas de web y database un entorno de una aplicación pero sin borrar nada "
     echo "    restart_hard  <app name> <environment> : Reinicia las máquinas de web y database de un entorno de una aplicación pero borrando la base de datos y la aplicacion "
+		echo ""
     echo "    deploy <app name> <environment> : Compila y Despliega la aplicacion en un entorno"
+		echo ""
     echo "    backup_database  <app name> <environment> : Backup de la base de datos de un entorno"	
     echo "    restore_database  <app name> <environment>  [DIA|MES] [<numero>] [<backup_environment>]  : Restore de la base de datos de un entorno"	
+		echo ""
     echo "    start_jenkins <app name> <environment> : Inicia la máquina de Jenkins"
     echo "    stop_jenkins <app name> <environment> : Para la máquina de Jenkins"
     echo "    restart_jenkins <app name> <environment> : Reinicia la maquina sin borrar los datos"
     echo "    restart_hard_jenkins <app name> <environment> : Reinicia la maquina borrando todos los datos"
+		echo ""
     echo "    delete_logs  <app name> <environment> : Imprimer un mensaje. Se usapara comprobar probar si se tiene acceso al script"
 }
 
@@ -123,7 +129,23 @@ fi
 
 sub_start_proxy(){
 
-  docker container run -d -p 80:80 -p 443:443 --restart always -e TZ=Europe/Madrid -v /var/run/docker.sock:/tmp/docker.sock --name nginx-proxy jwilder/nginx-proxy:0.7.0
+
+  mkdir -p $BASE_PATH/var/certs
+
+  docker container \
+      run \
+      -d \
+      -p 80:80 \
+      -p 443:443 	\
+			--restart always \
+			-e TZ=Europe/Madrid 
+			-v $BASE_PATH/var/certs:/etc/nginx/certs:ro \
+			-v /etc/nginx/vhost.d \
+			-v /usr/share/nginx/html \
+			-v /var/run/docker.sock:/tmp/docker.sock:ro 
+		  --label com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy \
+			--name nginx-proxy 
+			jwilder/nginx-proxy:0.7.0
 
 
   for APP_FILE_NAME in $(find $BASE_PATH/config -maxdepth 1 -name "*.app.config" -exec basename {} \;); do
@@ -179,6 +201,12 @@ sub_start_proxy(){
     google/cadvisor:v0.31.0 \
     -logtostderr --http_auth_file /home/cadvisor/auth.htpasswd --http_auth_realm $DOMAIN_NAME_MONITOR
  
+
+	docker run -d \
+  	-v $BASE_PATH/var/certs:/etc/nginx/certs:rw \
+  	-v /var/run/docker.sock:/var/run/docker.sock:ro \
+  	--volumes-from nginx-proxy \
+  	jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
 
    echo "Proxy arrancado"
 }
@@ -423,12 +451,17 @@ load_project_properties
     -d \
     --name tomcat-${APP_NAME}-${APP_ENVIRONMENT} \
     --expose 8080 \
+    --expose 8443 \
     --restart always \
     --network=webapp-${APP_NAME}-${APP_ENVIRONMENT} \
     --mount type=bind,source="$APP_BASE_PATH/web_app",destination="/usr/local/tomcat/webapps" \
     --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/usr/local/tomcat/logs" \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
+		-e VIRTUAL_PROTO=https \
+		-e VIRTUAL_PORT=8443 \
+    -e LETSENCRYPT_HOST=$VIRTUAL_HOST \
+    -e LETSENCRYPT_EMAIL=${SERVICES_MASTER_EMAIL} \
     tomcat:7.0.91-jre7
 
    echo "Web App arrancada"
@@ -546,6 +579,7 @@ sub_start_jenkins() {
     --mount type=bind,source="$BASE_PATH/bin/private/docker_host_comm/print_pipe",destination="/opt/jenkins_pipe/print_pipe" \
     --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/var/jenkins_home/userContent/web_logs" \
     --mount type=bind,source="$APP_BASE_PATH/database_logs",destination="/var/jenkins_home/userContent/database_logs" \
+    --mount type=bind,source="$APP_BASE_PATH/jenkins/logs",destination="/var/jenkins_home/userContent/jenkins_logs" \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
     -e VIRTUAL_PORT=8080 \
