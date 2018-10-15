@@ -332,6 +332,7 @@ fi
 }
 
 
+
 start_database() {
 
   if [ "$(docker network ls | grep  webapp-${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
@@ -341,6 +342,11 @@ start_database() {
   if [ "$(docker network inspect webapp-${APP_NAME}-${APP_ENVIRONMENT} | grep  nginx-proxy)" == "" ]; then
     docker network connect webapp-${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
   fi
+
+  if [ "$HARD_START" == "1" ]; then
+      rm -rf $APP_BASE_PATH/database/*
+  fi
+
 
   docker container run \
     -d \
@@ -390,7 +396,7 @@ load_project_properties
   fi
 
 
-  if [ "$SOFT_START" == "" ] || [ -z "$(ls -A $APP_BASE_PATH/web_app)" ] ; then
+  if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/web_app)" ] ; then
 
       rm -rf $APP_BASE_PATH/web_app/*
       #Crear la app ROOT por defecto
@@ -455,11 +461,21 @@ sub_stop() {
 }
 
 
+
+sub_restart_hard(){
+  check_app_name_environment_arguments
+
+  echo "Restart Hard"
+  HARD_START=1
+
+  sub_stop
+  sub_start
+
+}
+
 sub_restart(){
   check_app_name_environment_arguments
 
-  echo "Restart Soft"
-  SOFT_START=1
   sub_stop
   sub_start
 
@@ -502,7 +518,7 @@ sub_start_jenkins() {
     mkfifo "$APP_BASE_PATH/pipe_response_from_server_command"
   fi
 
-  if [ "$SOFT_START" == "" ]; then
+  if [ "$HARD_START" == "1" ]; then
 	  rm -rf $APP_BASE_PATH/jenkins/*
   fi
 
@@ -528,7 +544,7 @@ sub_start_jenkins() {
 
     #Esperar a que arranque y haga todo el sistema de directorios
     echo "esperando a que se inicie Jenkins"
-    sleep 20
+    sleep 60
 
   docker stop jenkins-${APP_NAME}-${APP_ENVIRONMENT}
 
@@ -554,7 +570,7 @@ sub_start_jenkins() {
     fi
   done
 
-  if [ "$SOFT_START" == "" ]; then
+  if [ "$HARD_START" == "1" ]; then
     cp -r $BASE_PATH/bin/private/jenkins/base/* $APP_BASE_PATH/jenkins
     pushd .
     cd $APP_BASE_PATH/jenkins
@@ -609,13 +625,22 @@ sub_stop_jenkins() {
   echo "Detenido Jenkins ${APP_NAME}-${APP_ENVIRONMENT}"
 }
 
+sub_restart_hard_jenkins() {
+  check_app_name_environment_arguments
+
+  HARD_START=1
+
+	sub_stop_jenkins
+	sub_start_jenkins
+}
+
 sub_restart_jenkins() {
   check_app_name_environment_arguments
-  echo "Restart Soft"
-SOFT_START=1
-sub_stop_jenkins
-sub_start_jenkins
+	sub_stop_jenkins
+	sub_start_jenkins
 }
+
+
 
 
 sub_restore_database(){
@@ -848,7 +873,6 @@ popd
 
   rm -rf $APP_BASE_PATH/dist/*
 
-  SOFT_START=1
   sub_start
 
    echo "Deploy completado"
