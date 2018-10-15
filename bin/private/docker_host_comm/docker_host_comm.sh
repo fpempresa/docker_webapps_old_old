@@ -33,8 +33,8 @@ do
 	echo $line
 
         arguments=( $line )
-        SECRET_KEY=${arguments[0]}
-	COMMAND=${arguments[1]}
+	COMMAND=${arguments[0]}
+        SECRET_KEY=${arguments[1]}
 	APP_NAME=${arguments[2]}
 	APP_ENVIRONMENT=${arguments[3]}
 
@@ -65,7 +65,7 @@ do
 		continue;
 	fi
 
-	if [ -z "$(echo $VALID_COMMANDS | grep -o ' ${COMMAND} ' | tr -d ' ')" ]; then
+	if [ -z "$(echo $VALID_COMMANDS | grep -o " ${COMMAND} " | tr -d ' ')" ]; then
 		echo "La orden no está permitida" > $RESPONSE_PIPE 
 		echo "#_#_#_# ERROR 1 #_#_#_#" > $RESPONSE_PIPE 
 		continue;

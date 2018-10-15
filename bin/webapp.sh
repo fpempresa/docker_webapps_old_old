@@ -637,8 +637,10 @@ sub_start_jenkins() {
     JENKINS_HASH_PASSWORD=$(htpasswd -bnBC 10 "" $SERVICES_MASTER_PASSWORD | tr -d ':\n' | sed 's/$2y/$2a/' | sed "s/\//\\\\\//g")
     sed -i "s/<passwordHash>#jbcrypt:.*<\/passwordHash>/<passwordHash>#jbcrypt:$JENKINS_HASH_PASSWORD<\/passwordHash>/g" users/system_builder/config.xml 
 
-    sed -i "s/<installStateName>NEW<\/installStateName>/<installStateName>RUNNING<\/installStateName><systemMessage>Aplicación de ${APP_NAME} en el entorno de ${APP_ENVIRONMENT}<\/systemMessage>/g" config.xml
+    sed -i "s/<installStateName>NEW<\/installStateName>/<installStateName>RUNNING<\/installStateName>\n  <systemMessage>Aplicación de ${APP_NAME} en el entorno de ${APP_ENVIRONMENT}<\/systemMessage>/g" config.xml
     sed -i "s/<slaveAgentPort>-1<\/slaveAgentPort>/<slaveAgentPort>50000<\/slaveAgentPort>/g" config.xml
+
+    cat config.xml
 
     echo -n "2.144" > jenkins.install.InstallUtil.lastExecVersion
     echo "<?xml version='1.1' encoding='UTF-8'?>" > jenkins.model.JenkinsLocationConfiguration.xml
