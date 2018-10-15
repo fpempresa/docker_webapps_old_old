@@ -3,7 +3,30 @@
   <actions/>
   <description>Reinicia los servidores Web y de base de datos de la aplicación borrando la base de datos y la aplicación web</description>
   <keepDependencies>false</keepDependencies>
-  <properties/>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>DELETE_APP_NAME</name>
+          <description>Indique la aplicación que desea reiniciar</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>DELETE_APP_ENVIRONMENT</name>
+          <description>Indique le entorno que desea reiniciar</description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CONFIRM_DELETE</name>
+          <description>Confirme que desea reiniciar borrando la base de datos y la aplicación (yes/no)</description>
+          <defaultValue>no</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
   <scm class="hudson.scm.NullSCM"/>
   <canRoam>true</canRoam>
   <disabled>false</disabled>
@@ -13,7 +36,20 @@
   <concurrentBuild>false</concurrentBuild>
   <builders>
     <hudson.tasks.Shell>
-      <command>COMMAND=restart_hard
+      <command>if [ &quot;$DELETE_APP_NAME&quot; != &quot;$APP_NAME&quot; ]; then
+  echo &quot;El nombre de la aplicación no es correcta&quot;
+  exit 1
+fi
+if [ &quot;$DELETE_APP_ENVIRONMENT&quot; != &quot;$APP_ENVIRONMENT&quot; ]; then
+  echo &quot;El entorno no es correcto&quot;
+  exit 1
+fi
+if [ &quot;$CONFIRM_DELETE&quot; != &quot;yes&quot; ]; then
+  echo &quot;No ha confirmado el borrado&quot;
+  exit 1
+fi
+
+COMMAND=restart_hard
 echo $COMMAND $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe_send_to_server_command
 /opt/jenkins_pipe/print_pipe /opt/jenkins_pipe/pipe_response_from_server_command &quot;#_#_#_#&quot;</command>
     </hudson.tasks.Shell>
@@ -26,4 +62,4 @@ echo $COMMAND $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe_send_to_ser
     </hudson.tasks.Mailer>
   </publishers>
   <buildWrappers/>
-</project>
+
