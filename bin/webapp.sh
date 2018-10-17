@@ -966,7 +966,7 @@ sub_delete_logs() {
 	echo "" > $(docker inspect --format='{{.LogPath}}' database-${APP_NAME}-${APP_ENVIRONMENT})
 	echo "" > $(docker inspect --format='{{.LogPath}}' tomcat-${APP_NAME}-${APP_ENVIRONMENT})
 	echo "" > $(docker inspect --format='{{.LogPath}}' jenkins-${APP_NAME}-${APP_ENVIRONMENT})
-  rm -rf $APP_BASE_PATH/web_logs/*
+	find $APP_BASE_PATH/web_logs/* -mtime +15 -delete
 
    echo "Logs borrados"
 }
