@@ -793,7 +793,7 @@ sub_restore_database(){
   echo "Iniciando restauracion de la base de datos....." 
   cat $APP_BASE_PATH/database_backup/backup.sql | docker exec -i database-${APP_NAME}-${APP_ENVIRONMENT} /usr/bin/mysql -u root --password=root ${APP_NAME}
   rm -f $APP_BASE_PATH/database_backup/backup.sql
-  echo "Bas de datos restaurada" 
+  echo "Base de datos restaurada" 
   sub_restart
 
   echo "Restore database completado"
