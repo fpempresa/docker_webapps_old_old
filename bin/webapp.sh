@@ -371,6 +371,12 @@ fi
 
 start_database() {
 
+  local REAL_HARD=0
+
+  if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/database)" ]; then
+      REAL_HARD=1
+  fi
+
   if [ "$(docker network ls | grep  webapp-${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
     docker network create webapp-${APP_NAME}-${APP_ENVIRONMENT}
   fi
@@ -379,8 +385,10 @@ start_database() {
     docker network connect webapp-${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
   fi
 
-  if [ "$HARD_START" == "1" ]; then
+  if [ "$REAL_HARD" == "1" ]; then
       rm -rf $APP_BASE_PATH/database/*
+      rm -rf $APP_BASE_PATH/database_backup/*
+      rm -rf $APP_BASE_PATH/database_logs/*
   fi
 
 
@@ -415,6 +423,12 @@ start_webapp() {
 
 load_project_properties
 
+  local REAL_HARD=0
+
+  if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/web_app)" ]; then
+      REAL_HARD=1
+  fi
+
   if [ "$APP_ENVIRONMENT" == "PRODUCCION" ]; then
     VIRTUAL_HOST=$DOMAIN_NAME_PRODUCCION
   elif [ "$APP_ENVIRONMENT" == "PREPRODUCCION" ]; then
@@ -436,15 +450,10 @@ load_project_properties
   fi
 
 
-  if [ "$HARD_START" == "1" ]; then
+  if [ "$REAL_HARD" == "1" ]; then
       rm -rf $APP_BASE_PATH/web_app/*
       rm -rf $APP_BASE_PATH/web_logs/*
-  fi
 
-  #Si no hay nada creamos una aplicación por defecto
-  if [ -z "$(ls -A $APP_BASE_PATH/web_app)" ]; then
-
-      rm -rf $APP_BASE_PATH/web_app/*
       #Crear la app ROOT por defecto
       mkdir -p $APP_BASE_PATH/web_app/ROOT/{META-INF,WEB-INF}
       echo "<html><body>La aplicacion '${APP_NAME}' en el entorno de '${APP_ENVIRONMENT}' aun no esta instalada</body></html>" > $APP_BASE_PATH/web_app/ROOT/index.html
@@ -538,6 +547,12 @@ sub_start_jenkins() {
 
   load_project_properties
 
+  local REAL_HARD=0
+
+  if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/jenkins)" ]; then
+      REAL_HARD=1
+  fi
+
 
   if [ "$APP_ENVIRONMENT" == "PRODUCCION" ]; then
     VIRTUAL_HOST=$DOMAIN_NAME_JENKINS_PRODUCCION
@@ -567,7 +582,7 @@ sub_start_jenkins() {
     mkfifo "$APP_BASE_PATH/pipe_response_from_server_command"
   fi
 
-  if [ "$HARD_START" == "1" ]; then
+  if [ "$REAL_HARD" == "1" ]; then
 	  rm -rf $APP_BASE_PATH/jenkins/*
   fi
 
@@ -624,15 +639,15 @@ sub_start_jenkins() {
     fi
   done
 
-  if [ "$HARD_START" == "1" ]; then
+  if [ "$REAL_HARD" == "1" ]; then
     cp -r $BASE_PATH/bin/private/jenkins/base/* $APP_BASE_PATH/jenkins
     pushd .
     cd $APP_BASE_PATH/jenkins
+
     rm secrets/initialAdminPassword
+
+
     mv users/admin users/system_builder
-
-
-
     sed -i "s/<fullName>admin<\/fullName>/<fullName>system_builder<\/fullName>/g" users/system_builder/config.xml
     JENKINS_HASH_PASSWORD=$(htpasswd -bnBC 10 "" $SERVICES_MASTER_PASSWORD | tr -d ':\n' | sed 's/$2y/$2a/' | sed "s/\//\\\\\//g")
     sed -i "s/<passwordHash>#jbcrypt:.*<\/passwordHash>/<passwordHash>#jbcrypt:$JENKINS_HASH_PASSWORD<\/passwordHash>/g" users/system_builder/config.xml 
@@ -641,6 +656,7 @@ sub_start_jenkins() {
     sed -i "s/<slaveAgentPort>-1<\/slaveAgentPort>/<slaveAgentPort>50000<\/slaveAgentPort>/g" config.xml
 
     echo -n "2.144" > jenkins.install.InstallUtil.lastExecVersion
+
     echo "<?xml version='1.1' encoding='UTF-8'?>" > jenkins.model.JenkinsLocationConfiguration.xml
     echo "<jenkins.model.JenkinsLocationConfiguration>" >> jenkins.model.JenkinsLocationConfiguration.xml
     echo "  <adminAddress>${APP_NAME}-${APP_ENVIRONMENT}-Jenkins &lt;${SERVICES_MASTER_EMAIL}&gt;</adminAddress>" >> jenkins.model.JenkinsLocationConfiguration.xml
