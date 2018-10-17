@@ -374,7 +374,8 @@ start_database() {
   local REAL_HARD=0
 
   if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/database)" ]; then
-      REAL_HARD=1
+		echo "Inicio Borrando de la base de datos"
+    REAL_HARD=1
   fi
 
   if [ "$(docker network ls | grep  webapp-${APP_NAME}-${APP_ENVIRONMENT})" == "" ]; then
@@ -387,7 +388,6 @@ start_database() {
 
   if [ "$REAL_HARD" == "1" ]; then
       rm -rf $APP_BASE_PATH/database/*
-      rm -rf $APP_BASE_PATH/database_backup/*
       rm -rf $APP_BASE_PATH/database_logs/*
   fi
 
@@ -426,6 +426,7 @@ load_project_properties
   local REAL_HARD=0
 
   if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/web_app)" ]; then
+		  echo "Inicio Borrando de la app web"
       REAL_HARD=1
   fi
 
@@ -550,6 +551,7 @@ sub_start_jenkins() {
   local REAL_HARD=0
 
   if [ "$HARD_START" == "1" ] || [ -z "$(ls -A $APP_BASE_PATH/jenkins)" ]; then
+		  echo "Inicio Borrando de Jenkins"
       REAL_HARD=1
   fi
 
@@ -760,11 +762,16 @@ sub_restore_database(){
 		exit 1
 	fi
 
-			if [ "$APP_ENVIRONMENT" ==  "PRODUCCION" ] && [ "$REAL_FILE_ENVIRONMENT" !=  "PRODUCCION" ]; then
-				echo "El entorno de produccion solo se puede restaurar desde un backup de produccion"
-				sub_help
-				exit 1
-			fi
+	if [ "$APP_ENVIRONMENT" ==  "PRODUCCION" ] && [ "$REAL_FILE_ENVIRONMENT" !=  "PRODUCCION" ]; then
+		echo "El entorno de produccion solo se puede restaurar desde un backup de produccion"
+		sub_help
+		exit 1
+	fi
+
+
+
+
+
 
   FILE_NAME=${APP_NAME}-${REAL_FILE_ENVIRONMENT}-$PERIODO-$NUMERO-backup.zip
   URL_FTP_FILE=ftp://$FTP_BACKUP_HOST/$FTP_BACKUP_ROOT_PATH/$FILE_NAME
@@ -776,7 +783,6 @@ sub_restore_database(){
   unzip -d $APP_BASE_PATH/database_backup  $APP_BASE_PATH/database_backup/$FILE_NAME
   rm -f $APP_BASE_PATH/database_backup/$FILE_NAME
 
-
   sub_stop
 
 
@@ -784,13 +790,13 @@ sub_restore_database(){
   start_database
   echo "Esperando 10 seg hasta que arranque" 
   sleep 10
-  echo "Iniciando restauracion de la base de datos" 
+  echo "Iniciando restauracion de la base de datos....." 
   cat $APP_BASE_PATH/database_backup/backup.sql | docker exec -i database-${APP_NAME}-${APP_ENVIRONMENT} /usr/bin/mysql -u root --password=root ${APP_NAME}
   rm -f $APP_BASE_PATH/database_backup/backup.sql
-  
+  echo "Bas de datos restaurada" 
   sub_restart
 
-     echo "Restore database completado"
+  echo "Restore database completado"
 }
 
 sub_backup_database(){
