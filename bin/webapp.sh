@@ -124,6 +124,19 @@ fi
 
 # SubOrdenes
 
+sub_test_success() {
+  echo "Script que tiene exito"
+	echo "Args:"
+	echo "$@"
+  exit 0
+}
+
+sub_test_fail() {
+  echo "Script que falla"
+	echo "Args:"
+	echo "$@"
+  exit 1
+}
 
 
 
