@@ -25,5 +25,14 @@ echo $COMMAND $SECRET_KEY $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe
       <sendToIndividuals>false</sendToIndividuals>
     </hudson.tasks.Mailer>
   </publishers>
-  <buildWrappers/>
+  <buildWrappers>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.19">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>5</timeoutMinutes>
+      </strategy>
+      <operationList>
+        <hudson.plugins.build__timeout.operations.FailOperation/>
+      </operationList>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+  </buildWrappers>
 </project>
