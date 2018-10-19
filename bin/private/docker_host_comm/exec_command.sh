@@ -18,7 +18,7 @@ SECRET_KEY=$2
 APP_NAME=$3
 APP_ENVIRONMENT=$4
 
-echo "Iniciando ejecucion de: $COMMAND $APP_NAME $APP_ENVIRONMENT"
+echo "Start: $COMMAND $APP_NAME $APP_ENVIRONMENT"
 
 APP_BASE_PATH=$BASE_PATH/apps/$APP_NAME/$APP_ENVIRONMENT
 RESPONSE_PIPE=$APP_BASE_PATH/pipe_response_from_server_command
@@ -103,6 +103,7 @@ RESULT=${PIPESTATUS[0]}
 
 if [ "$RESULT" -eq 0 ]; then
     echo "#_#_#_# SUCCESS 0 #_#_#_#"  >$RESPONSE_PIPE 
+		echo "Finish OK: $COMMAND $APP_NAME $APP_ENVIRONMENT"
     exit 0
 else
     echo "#_#_#_# ERROR $RESULT #_#_#_#" >$RESPONSE_PIPE 
