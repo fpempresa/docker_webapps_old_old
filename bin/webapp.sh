@@ -210,6 +210,7 @@ sub_start_proxy(){
     --volume=/dev/disk/:/dev/disk:ro \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$DOMAIN_NAME_MONITOR  \
+    -e VIRTUAL_PORT=8080 \
     -e LETSENCRYPT_HOST=$DOMAIN_NAME_MONITOR \
     -e LETSENCRYPT_EMAIL=${SERVICES_MASTER_EMAIL} \
     --entrypoint "/usr/bin/cadvisor" \
