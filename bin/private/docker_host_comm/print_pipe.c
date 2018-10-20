@@ -12,22 +12,22 @@ int main(int argc, char *argv[])
 
 
 
-    char line[50000];
+	char line[50000];
 
 	if (argc != 3) {
 		fprintf(stderr, "Usage: %s <pipePath> <endString>\n", argv[0]);
 		return 1;
-   	}
- 
-    	char * pipePath = argv[1]; 
-  
+	}
+
+	char * pipePath = argv[1]; 
+
 	FILE* file = fopen(pipePath, "r");
- 	int salir=0;
-    while (salir==0) {
+	int salir=0;
+	while (salir==0) {
 		if (fgets(line,sizeof(line), file)) {
-        	printf("%s", line); 
+			printf("%s", line); 
 			if (prefix(argv[2],line)) {
-	   			salir=1;
+				salir=1;
 
 				char * pch = strtok (line," ");
 				pch = strtok (NULL, " ");
@@ -35,17 +35,20 @@ int main(int argc, char *argv[])
 				fclose(file); 
 				return atoi(pch);
 			}
+		} else {
+			fclose(file); 
+			file = fopen(pipePath, "r");
 		}
 
-    }
+	}
 
 
 
-    fclose(file); 
-  
+	fclose(file); 
 
 
-    return 0; 
+
+	return 0; 
 } 
 
 int prefix(const char *pre, const char *str)

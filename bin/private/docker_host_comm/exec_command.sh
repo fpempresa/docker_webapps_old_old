@@ -103,10 +103,11 @@ RESULT=${PIPESTATUS[0]}
 
 if [ "$RESULT" -eq 0 ]; then
     echo "#_#_#_# SUCCESS 0 #_#_#_#"  >$RESPONSE_PIPE 
-		echo "Finish OK: $COMMAND $APP_NAME $APP_ENVIRONMENT"
+    echo "Finish OK: $COMMAND $APP_NAME $APP_ENVIRONMENT"
     exit 0
 else
-    echo "#_#_#_# ERROR $RESULT #_#_#_#" >$RESPONSE_PIPE 
+    echo "#_#_#_# ERROR $RESULT #_#_#_#" >$RESPONSE_PIPE
+    echo "Finish Fail: $COMMAND $APP_NAME $APP_ENVIRONMENT"
     exit 1
 fi
 

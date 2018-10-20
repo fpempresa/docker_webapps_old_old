@@ -65,10 +65,17 @@ echo "DEFAULT_LOGIN=${DEFAULT_LOGIN}" > $BASE_PATH/config/global.config
 echo "DEFAULT_PASSWORD=${DEFAULT_PASSWORD}" >> $BASE_PATH/config/global.config
 echo "DOMAIN_NAME_MONITOR=${DOMAIN_NAME_MONITOR}" >> $BASE_PATH/config/global.config
 
-#Crear el servicio
+#Crear el PIPE
+PIPE=$BASE_PATH/var/pipe_send_to_server_command
+if [[ ! -p "$PIPE" ]]; then
+  mkfifo "$PIPE"
+  chmod ugo+rw $PIPE
+fi
+#Crear al servicio
 cp $BASE_PATH/bin/private/docker_host_comm/docker_host_comm.service /lib/systemd/system
 #Poner bien la ruta
-sed -i "s/ExecStart=\/opt\/docker_webapps/ExecStart=$(echo $BASE_PATH | sed s/\\//\\\\\\//g)/g" /lib/systemd/system/docker_host_comm.service
+sed -i "s/_BASE_PATH_/$(echo $BASE_PATH | sed s/\\//\\\\\\//g)/g" /lib/systemd/system/docker_host_comm.service
+#Iniciar el servicio
 systemctl start docker_host_comm.service
 systemctl enable docker_host_comm.service
 

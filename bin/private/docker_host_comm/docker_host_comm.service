@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/opt/docker_webapps/bin/private/docker_host_comm/docker_host_comm.sh
+ExecStart=_BASE_PATH_/bin/private/docker_host_comm/docker_host_comm _BASE_PATH_ 
 
 [Install]
 WantedBy=multi-user.target
