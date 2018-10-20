@@ -210,6 +210,8 @@ sub_start_proxy(){
     --volume=/dev/disk/:/dev/disk:ro \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$DOMAIN_NAME_MONITOR  \
+    -e LETSENCRYPT_HOST=$DOMAIN_NAME_MONITOR \
+    -e LETSENCRYPT_EMAIL=${SERVICES_MASTER_EMAIL} \
     --entrypoint "/usr/bin/cadvisor" \
     google/cadvisor:v0.31.0 \
     -logtostderr --http_auth_file /home/cadvisor/auth.htpasswd --http_auth_realm $DOMAIN_NAME_MONITOR
