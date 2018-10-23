@@ -120,6 +120,38 @@ if [ "$APP_ENVIRONMENT" !=  "PRODUCCION" ] && [ "$APP_ENVIRONMENT" != "PREPRODUC
 fi
 }
 
+get_app_env_config_value() {
+	KEY_NAME=$1
+
+	VALUE=$(cat $BASE_PATH/config/${APP_NAME}.app.config | grep "^${APP_ENVIRONMENT}_$1=" | cut -d "=" -f2)
+	if [ -z "$VALUE" ]; then
+		echo "No existe clave secreta en el fichero de configuracion"
+		exit 1
+	fi
+	echo $VALUE
+}
+
+set_app_env_config_value() {
+	KEY_NAME=$1
+	VALUE=$2
+
+	if [ ! -f $BASE_PATH/config/$APP_NAME.app.config ]; then
+	    $BASE_PATH/config/$APP_NAME.app.config
+	fi
+
+	if [ -z "$(cat $BASE_PATH/config/$APP_NAME.app.config| grep ^${APP_ENVIRONMENT}_${KEY_NAME}=)" ]; then
+		echo ${APP_ENVIRONMENT}_${KEY_NAME}=${VALUE} >> $BASE_PATH/config/$APP_NAME.app.config
+	else 
+		sed -i "s/${APP_ENVIRONMENT}_${KEY_NAME}=.*/${APP_ENVIRONMENT}_${KEY_NAME}=${VALUE}/g" $BASE_PATH/config/$APP_NAME.app.config
+	fi
+
+	STORED_VALUE=$(get_app_env_config_value ${KEY_NAME})
+
+	if [ "$VALUE" != "$STORED_VALUE" ]; then
+		echo "No se ha almacenado correctamente el valor ${VALUE} en ${KEY_NAME} ya que es $STORED_VALUE"
+		exit 1
+	fi
+}
 
 
 # SubOrdenes
@@ -253,28 +285,25 @@ sub_start_proxy
 sub_restart_all(){
 	sub_restart_proxy
 
-  for APP_FILE_NAME in $(find $BASE_PATH/config -maxdepth 1 -name "*.app.config" -exec basename {} \;); do
+	for APP_FILE_NAME in $(find $BASE_PATH/config -maxdepth 1 -name "*.app.config" -printf "%f\n"); do
 		APP_NAME=$(echo ${APP_FILE_NAME} | sed -e "s/.app.config//")
-
-    . $BASE_PATH/config/$APP_FILE_NAME
-
-    for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
-			
+		for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
 			APP_BASE_PATH=$BASE_PATH/apps/$APP_NAME/$APP_ENVIRONMENT
 
-	  	VARIABLE_NAME_ENABLE_WEBAPP="${APP_ENVIRONMENT}_ENABLE_WEBAPP"
-	  	VARIABLE_NAME_ENABLE_JENKINS="${APP_ENVIRONMENT}_ENABLE_JENKINS"
+			ENABLE_WEBAPP=$(get_app_env_config_value ENABLE_WEBAPP)
+			ENABLE_JENKINS=$(get_app_env_config_value ENABLE_JENKINS)
 
-			echo "La app '$APP_NAME' en entorno $APP_ENVIRONMENT webapp_enable=${!VARIABLE_NAME_ENABLE_WEBAPP} jenkins_enable=${!VARIABLE_NAME_ENABLE_JENKINS}"
+			echo "La app '$APP_NAME' en entorno $APP_ENVIRONMENT ENABLE_WEBAPP=${ENABLE_WEBAPP} ENABLE_JENKINS=${ENABLE_JENKINS}"
 
-			if [ "${!VARIABLE_NAME_ENABLE_WEBAPP}" == "1" ]; then
+			if [ "${ENABLE_WEBAPP}" == "1" ]; then
 				sub_restart
+
 			fi
 
-			if [ "${!VARIABLE_NAME_ENABLE_JENKINS}" == "1" ]; then
+			if [ "${ENABLE_JENKINS}" == "1" ]; then
 				sub_restart_jenkins
 			fi
-    done
+		done
 	done
 
 }
@@ -298,32 +327,32 @@ sub_add(){
 
 
 
-    if [ -d $BASE_PATH/apps/$APP_NAME ]; then
-       echo "Ya existe la carpeta de la aplicación"
-       exit 1
-    fi
-    if [ -f $BASE_PATH/config/$APP_NAME.app.config ]; then
-       echo "Ya existe el fichero de configuracion"
-       exit 1
-    fi
+	if [ -d $BASE_PATH/apps/$APP_NAME ]; then
+		echo "Ya existe la carpeta de la aplicación"
+		exit 1
+	fi
+	if [ -f $BASE_PATH/config/$APP_NAME.app.config ]; then
+		echo "Ya existe el fichero de configuracion"
+		exit 1
+	fi
 
 
-    for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
-      mkdir -p $BASE_PATH/apps/$APP_NAME/${APP_ENVIRONMENT}/{database,database_logs,database_backup,web_logs,web_app,jenkins,dist}
-    done 
+	for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
+		mkdir -p $BASE_PATH/apps/$APP_NAME/${APP_ENVIRONMENT}/{database,database_logs,database_backup,web_logs,web_app,jenkins,dist}
+	done 
 
 
 
 
-    find $BASE_PATH/apps/$APP_NAME -type d -exec chmod 777 {} \;
-    find $BASE_PATH/apps/$APP_NAME -type f -exec chmod 666 {} \;
+	find $BASE_PATH/apps/$APP_NAME -type d -exec chmod 777 {} \;
+	find $BASE_PATH/apps/$APP_NAME -type f -exec chmod 666 {} \;
 
-    #Guardar la URL del repositorio de Git de private
-    echo GIT_REPOSITORY_PRIVATE=$(echo $GIT_REPOSITORY_PRIVATE | sed "s/\\$/\\\\\$/g") > $BASE_PATH/config/$APP_NAME.app.config
-    for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
-    	echo "${APP_ENVIRONMENT}_ENABLE_WEBAPP=0" >> $BASE_PATH/config/$APP_NAME.app.config
-    	echo "${APP_ENVIRONMENT}_ENABLE_JENKINS=0" >> $BASE_PATH/config/$APP_NAME.app.config
-    done
+	#Guardar la URL del repositorio de Git de private
+	echo GIT_REPOSITORY_PRIVATE=$(echo $GIT_REPOSITORY_PRIVATE | sed "s/\\$/\\\\\$/g") > $BASE_PATH/config/$APP_NAME.app.config
+	for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
+		set_app_env_config_value ENABLE_WEBAPP 0
+		set_app_env_config_value ENABLE_JENKINS 0
+	done
 
 	echo "Aplicacion añadida"
     
@@ -604,7 +633,7 @@ sub_start_jenkins() {
 	  rm -rf $APP_BASE_PATH/jenkins/*
   fi
 
-  SECRET_KEY=$(openssl rand 64 | base32 |  tr -d '\n' | tr -d "=" )
+  SECRET_KEY=$(openssl rand -hex 32)
 
   docker container run \
     -d \
@@ -692,20 +721,19 @@ sub_start_jenkins() {
       find $APP_BASE_PATH/jenkins -type d -exec chmod 777 {} \;
       find $APP_BASE_PATH/jenkins -type f -exec chmod 666 {} \;
 
-docker start jenkins-${APP_NAME}-${APP_ENVIRONMENT}
+	docker start jenkins-${APP_NAME}-${APP_ENVIRONMENT}
 
-	if [ -z "$(cat $BASE_PATH/config/$APP_NAME.app.config| grep ^${APP_ENVIRONMENT}_SECRET_KEY=)" ]; then
-		echo ${APP_ENVIRONMENT}_SECRET_KEY=$SECRET_KEY >> $BASE_PATH/config/$APP_NAME.app.config
-  else 
-		sed -i "s/${APP_ENVIRONMENT}_SECRET_KEY=.*/${APP_ENVIRONMENT}_SECRET_KEY=$SECRET_KEY/g" $BASE_PATH/config/$APP_NAME.app.config
-  fi
-
-	sed -i "s/${APP_ENVIRONMENT}_ENABLE_JENKINS=.*/${APP_ENVIRONMENT}_ENABLE_JENKINS=1/g" $BASE_PATH/config/$APP_NAME.app.config
+	set_app_env_config_value SECRET_KEY $SECRET_KEY	
+	set_app_env_config_value ENABLE_JENKINS 1	
 
 
 
   echo "Arrancado Jenkins ${APP_NAME}-${APP_ENVIRONMENT}"
 }
+
+
+
+
 
 sub_stop_jenkins() {
   check_app_name_environment_arguments
@@ -715,7 +743,7 @@ sub_stop_jenkins() {
   docker container rm jenkins-${APP_NAME}-${APP_ENVIRONMENT}
   set -e
 
-	sed -i "s/${APP_ENVIRONMENT}_ENABLE_JENKINS=.*/${APP_ENVIRONMENT}_ENABLE_JENKINS=0/g" $BASE_PATH/config/$APP_NAME.app.config
+set_app_env_config_value ENABLE_JENKINS 0
 
   echo "Detenido Jenkins ${APP_NAME}-${APP_ENVIRONMENT}"
 }
