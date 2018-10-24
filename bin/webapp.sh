@@ -255,6 +255,7 @@ sub_start_proxy(){
   	-v /var/run/docker.sock:/var/run/docker.sock:ro \
   	--volumes-from nginx-proxy \
 	--name letsencript \
+	--restart always \
 	jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
 
    echo "Proxy arrancado"
