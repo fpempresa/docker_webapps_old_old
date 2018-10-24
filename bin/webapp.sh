@@ -228,6 +228,14 @@ sub_start_proxy(){
   mkdir -p $BASE_PATH/var/cadvisor
   htpasswd -c -i -b $BASE_PATH/var/cadvisor/auth.htpasswd ${DEFAULT_LOGIN} ${DEFAULT_PASSWORD}
 
+	docker run -d \
+  	-v $BASE_PATH/var/certs:/etc/nginx/certs:rw \
+  	-v /var/run/docker.sock:/var/run/docker.sock:ro \
+  	--volumes-from nginx-proxy \
+	--name letsencript \
+	--restart always \
+	jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
+
   docker run \
     -d \
     --name cadvisor \
@@ -250,13 +258,7 @@ sub_start_proxy(){
     -logtostderr --http_auth_file /home/cadvisor/auth.htpasswd --http_auth_realm $DOMAIN_NAME_MONITOR
  
 
-	docker run -d \
-  	-v $BASE_PATH/var/certs:/etc/nginx/certs:rw \
-  	-v /var/run/docker.sock:/var/run/docker.sock:ro \
-  	--volumes-from nginx-proxy \
-	--name letsencript \
-	--restart always \
-	jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
+
 
    echo "Proxy arrancado"
 }
@@ -309,7 +311,25 @@ sub_restart_all(){
 
 }
 
+sub_restart_all_jenkins(){
 
+	for APP_FILE_NAME in $(find $BASE_PATH/config -maxdepth 1 -name "*.app.config" -printf "%f\n"); do
+		APP_NAME=$(echo ${APP_FILE_NAME} | sed -e "s/.app.config//")
+		for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
+			APP_BASE_PATH=$BASE_PATH/apps/$APP_NAME/$APP_ENVIRONMENT
+
+			ENABLE_JENKINS=$(get_app_env_config_value ENABLE_JENKINS)
+
+			echo "La app '$APP_NAME' en entorno $APP_ENVIRONMENT ENABLE_JENKINS=${ENABLE_JENKINS}"
+
+
+			if [ "${ENABLE_JENKINS}" == "1" ]; then
+				sub_restart_jenkins
+			fi
+		done
+	done
+
+}
 
 
 sub_add(){
@@ -657,6 +677,7 @@ sub_start_jenkins() {
     -e LETSENCRYPT_HOST=$VIRTUAL_HOST \
     -e LETSENCRYPT_EMAIL=${SERVICES_MASTER_EMAIL} \
     -e SECRET_KEY=$SECRET_KEY \
+    -m 550m \
     jenkins/jenkins:2.144
 
     #Esperar a que arranque y haga todo el sistema de directorios
