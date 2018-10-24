@@ -677,7 +677,8 @@ sub_start_jenkins() {
     -e LETSENCRYPT_HOST=$VIRTUAL_HOST \
     -e LETSENCRYPT_EMAIL=${SERVICES_MASTER_EMAIL} \
     -e SECRET_KEY=$SECRET_KEY \
-    -m 550m \
+    -e JAVA_OPTS="-Xmx600m" \
+    -m 700m \
     jenkins/jenkins:2.144
 
     #Esperar a que arranque y haga todo el sistema de directorios
