@@ -1049,25 +1049,29 @@ log_separators() {
 }
 
 sub_stats_logs() {
-	check_app_name_environment_arguments
+
 
 	echo "******************BEGIN:docker stats **************************"
 	docker stats --no-stream | head -1 | sort -k2 && docker stats --no-stream | tail -n+2 | sort -k2
+	tput init
 	echo "******************END:docker stats **************************"
 	log_separators
 
 	echo "******************BEGIN:docker logs nginx-proxy **************************"
 	docker logs nginx-proxy
+	tput init
 	echo "******************END:docker logs nginx-proxy **************************"
 	log_separators
 
 	echo "******************BEGIN:docker logs letsencript **************************"
 	docker logs letsencript
+	tput init
 	echo "******************END:docker logs letsencript **************************"
 	log_separators
 
 	echo "******************BEGIN:docker logs cadvisor **************************"
 	docker logs cadvisor
+	tput init
 	echo "******************END:docker logs cadvisor **************************"
 	log_separators
 
