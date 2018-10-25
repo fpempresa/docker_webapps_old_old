@@ -46,6 +46,10 @@ apt install -y apache2-utils zip unzip curl
 #Docker
 apt install -y $BASE_PATH/bin/private/docker/docker-ce_18.06.1~ce~3-0~ubuntu_amd64.deb
 
+systemctl stop docker.service
+cp $BASE_PATH/bin/private/docker/daemon.json /etc/docker
+systemctl start docker.service
+systemctl enable docker.service
 
 
 #Cargar las imagenes
