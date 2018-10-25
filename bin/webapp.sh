@@ -1048,7 +1048,7 @@ log_separators() {
 	echo "***************************************************"
 }
 
-sub_status() {
+sub_stats_logs() {
 	check_app_name_environment_arguments
 
 	echo "******************BEGIN:docker stats **************************"
@@ -1056,19 +1056,19 @@ sub_status() {
 	echo "******************END:docker stats **************************"
 	log_separators
 
-	echo "******************BEGIN:nginx-proxy **************************"
+	echo "******************BEGIN:docker logs nginx-proxy **************************"
 	docker logs nginx-proxy
-	echo "******************END:nginx-proxy **************************"
+	echo "******************END:docker logs nginx-proxy **************************"
 	log_separators
 
-	echo "******************BEGIN:letsencript **************************"
+	echo "******************BEGIN:docker logs letsencript **************************"
 	docker logs letsencript
-	echo "******************END:letsencript **************************"
+	echo "******************END:docker logs letsencript **************************"
 	log_separators
 
-	echo "******************BEGIN:cadvisor **************************"
+	echo "******************BEGIN:docker logs cadvisor **************************"
 	docker logs cadvisor
-	echo "******************END:cadvisor **************************"
+	echo "******************END:docker logs cadvisor **************************"
 	log_separators
 
 }
