@@ -1049,13 +1049,7 @@ log_separators() {
 }
 
 sub_docker_stats() {
-
-
-	echo "******************BEGIN:docker stats **************************"
 	docker stats --no-stream | head -1 | sort -k2 && docker stats --no-stream | tail -n+2 | sort -k2
-	echo "******************END:docker stats **************************"
-	log_separators
-
 }
 
 sub_docker_logs() {
