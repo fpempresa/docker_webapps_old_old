@@ -1038,6 +1038,42 @@ sub_delete_logs() {
    echo "Logs borrados"
 }
 
+log_separators() {
+	echo "***************************************************"
+	echo "***************************************************"
+	echo "***************************************************"
+	echo "***************************************************"
+	echo "***************************************************"
+	echo "***************************************************"
+	echo "***************************************************"
+}
+
+sub_status() {
+	check_app_name_environment_arguments
+
+	echo "******************BEGIN:docker stats **************************"
+	docker stats --no-stream | head -1 | sort -k2 && docker stats --no-stream | tail -n+2 | sort -k2
+	echo "******************END:docker stats **************************"
+	log_separators
+
+	echo "******************BEGIN:nginx-proxy **************************"
+	docker logs nginx-proxy
+	echo "******************END:nginx-proxy **************************"
+	log_separators
+
+	echo "******************BEGIN:letsencript **************************"
+	docker logs letsencript
+	echo "******************END:letsencript **************************"
+	log_separators
+
+	echo "******************BEGIN:cadvisor **************************"
+	docker logs cadvisor
+	echo "******************END:cadvisor **************************"
+	log_separators
+
+}
+
+
 subcommand=$1
 case $subcommand in
     "" | "-h" | "--help")
