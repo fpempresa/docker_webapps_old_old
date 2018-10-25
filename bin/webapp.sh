@@ -34,25 +34,25 @@ sub_help(){
     echo "    stop_proxy : Para el proxy y sus dependencias (monitor,certificadoss,etc)."
     echo "    restart_proxy : Reinicia el proxy y sus dependencias (monitor,certificadoss,etc)."
     echo "    restart_all : Reinicia el proxy y el resto de las aplicaciones web y jenkins que estubieran arrancadas"
-		echo ""
+    echo ""
     echo "    add   : Añade una aplicacion y todos sus entornos. Pero no inicia las maquinas"
     echo "    remove   : Borrar una aplicación, Para las maquinas y borrar toda la información"
-		echo ""
+    echo ""
     echo "    start  <app name> <environment> : Inicia las máquinas un entorno de una aplicación "
     echo "    stop  <app name> <environment> : Para las máquina un entorno de una aplicación"
     echo "    restart  <app name> <environment> : Reinicia las máquinas de web y database un entorno de una aplicación pero sin borrar nada "
     echo "    restart_hard  <app name> <environment> : Reinicia las máquinas de web y database de un entorno de una aplicación pero borrando la base de datos y la aplicacion "
-		echo ""
+    echo ""
     echo "    deploy <app name> <environment> : Compila y Despliega la aplicacion en un entorno"
-		echo ""
+    echo ""
     echo "    backup_database  <app name> <environment> : Backup de la base de datos de un entorno"	
     echo "    restore_database  <app name> <environment>  [DIA|MES] [<numero>] [<backup_environment>]  : Restore de la base de datos de un entorno"	
-		echo ""
+    echo ""
     echo "    start_jenkins <app name> <environment> : Inicia la máquina de Jenkins"
     echo "    stop_jenkins <app name> <environment> : Para la máquina de Jenkins"
     echo "    restart_jenkins <app name> <environment> : Reinicia la maquina sin borrar los datos"
     echo "    restart_hard_jenkins <app name> <environment> : Reinicia la maquina borrando todos los datos"
-		echo ""
+    echo ""
     echo "    delete_logs  <app name> <environment> : Imprimer un mensaje. Se usapara comprobar probar si se tiene acceso al script"
 }
 
@@ -120,10 +120,11 @@ if [ "$APP_ENVIRONMENT" !=  "PRODUCCION" ] && [ "$APP_ENVIRONMENT" != "PREPRODUC
 fi
 }
 
-get_app_env_config_value() {
+
+get_app_config_value() {
 	KEY_NAME=$1
 
-	VALUE=$(cat $BASE_PATH/config/${APP_NAME}.app.config | grep "^${APP_ENVIRONMENT}_$1=" | cut -d "=" -f2)
+	VALUE=$(cat $BASE_PATH/config/${APP_NAME}.app.config | grep "^$1=" | cut -d "=" -f2)
 	if [ -z "$VALUE" ]; then
 		echo "No existe clave secreta en el fichero de configuracion"
 		exit 1
@@ -131,21 +132,21 @@ get_app_env_config_value() {
 	echo $VALUE
 }
 
-set_app_env_config_value() {
+set_app_config_value() {
 	KEY_NAME=$1
 	VALUE=$2
 
 	if [ ! -f $BASE_PATH/config/$APP_NAME.app.config ]; then
-	    $BASE_PATH/config/$APP_NAME.app.config
+	   touch $BASE_PATH/config/$APP_NAME.app.config
 	fi
 
-	if [ -z "$(cat $BASE_PATH/config/$APP_NAME.app.config| grep ^${APP_ENVIRONMENT}_${KEY_NAME}=)" ]; then
-		echo ${APP_ENVIRONMENT}_${KEY_NAME}=${VALUE} >> $BASE_PATH/config/$APP_NAME.app.config
+	if [ -z "$(cat $BASE_PATH/config/$APP_NAME.app.config| grep ^${KEY_NAME}=)" ]; then
+		echo ${KEY_NAME}=${VALUE} >> $BASE_PATH/config/$APP_NAME.app.config
 	else 
-		sed -i "s/${APP_ENVIRONMENT}_${KEY_NAME}=.*/${APP_ENVIRONMENT}_${KEY_NAME}=${VALUE}/g" $BASE_PATH/config/$APP_NAME.app.config
+		sed -i "s/${KEY_NAME}=.*/${KEY_NAME}=${VALUE}/g" $BASE_PATH/config/$APP_NAME.app.config
 	fi
 
-	STORED_VALUE=$(get_app_env_config_value ${KEY_NAME})
+	STORED_VALUE=$(get_app_config_value ${KEY_NAME})
 
 	if [ "$VALUE" != "$STORED_VALUE" ]; then
 		echo "No se ha almacenado correctamente el valor ${VALUE} en ${KEY_NAME} ya que es $STORED_VALUE"
@@ -293,8 +294,8 @@ sub_restart_all(){
 		for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
 			APP_BASE_PATH=$BASE_PATH/apps/$APP_NAME/$APP_ENVIRONMENT
 
-			ENABLE_WEBAPP=$(get_app_env_config_value ENABLE_WEBAPP)
-			ENABLE_JENKINS=$(get_app_env_config_value ENABLE_JENKINS)
+			ENABLE_WEBAPP=$(get_app_config_value ${APP_ENVIRONMENT}_ENABLE_WEBAPP)
+			ENABLE_JENKINS=$(get_app_config_value ${APP_ENVIRONMENT}_ENABLE_JENKINS)
 
 			echo "La app '$APP_NAME' en entorno $APP_ENVIRONMENT ENABLE_WEBAPP=${ENABLE_WEBAPP} ENABLE_JENKINS=${ENABLE_JENKINS}"
 
@@ -318,7 +319,7 @@ sub_restart_all_jenkins(){
 		for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
 			APP_BASE_PATH=$BASE_PATH/apps/$APP_NAME/$APP_ENVIRONMENT
 
-			ENABLE_JENKINS=$(get_app_env_config_value ENABLE_JENKINS)
+			ENABLE_JENKINS=$(get_app_config_value ${APP_ENVIRONMENT}_ENABLE_JENKINS)
 
 			echo "La app '$APP_NAME' en entorno $APP_ENVIRONMENT ENABLE_JENKINS=${ENABLE_JENKINS}"
 
@@ -339,15 +340,6 @@ sub_add(){
 		read  -p "Nombre de la aplicacion:" APP_NAME
 	done
 
-
-
-	GIT_REPOSITORY_PRIVATE=""
-	while [ "$GIT_REPOSITORY_PRIVATE" == "" ]; do
-		read  -p "URL Git con las propiedades de la aplicación  :" GIT_REPOSITORY_PRIVATE
-	done
-
-
-
 	if [ -d $BASE_PATH/apps/$APP_NAME ]; then
 		echo "Ya existe la carpeta de la aplicación"
 		exit 1
@@ -356,6 +348,17 @@ sub_add(){
 		echo "Ya existe el fichero de configuracion"
 		exit 1
 	fi
+
+
+	GIT_REPOSITORY_PRIVATE=""
+	while [ "$GIT_REPOSITORY_PRIVATE" == "" ]; do
+		read  -p "URL Git con las propiedades de la aplicación:" GIT_REPOSITORY_PRIVATE
+	done
+
+	HOUR_PERIODIC_TASKS=""
+	while [ "$HOUR_PERIODIC_TASKS" == "" ]; do
+		read  -p "Hora en la que ejecutar las tareas periodicas en todos los entornos (0-23):" HOUR_PERIODIC_TASKS
+	done
 
 
 	for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
@@ -368,12 +371,13 @@ sub_add(){
 	find $BASE_PATH/apps/$APP_NAME -type d -exec chmod 777 {} \;
 	find $BASE_PATH/apps/$APP_NAME -type f -exec chmod 666 {} \;
 
-	#Guardar la URL del repositorio de Git de private
-	echo GIT_REPOSITORY_PRIVATE=$(echo $GIT_REPOSITORY_PRIVATE | sed "s/\\$/\\\\\$/g") > $BASE_PATH/config/$APP_NAME.app.config
+	set_app_config_value GIT_REPOSITORY_PRIVATE $(echo $GIT_REPOSITORY_PRIVATE | sed "s/\\$/\\\\\$/g")
+	set_app_config_value HOUR_PERIODIC_TASKS $HOUR_PERIODIC_TASKS
 	for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
-		set_app_env_config_value ENABLE_WEBAPP 0
-		set_app_env_config_value ENABLE_JENKINS 0
+		set_app_config_value ${APP_ENVIRONMENT}_ENABLE_WEBAPP 0
+		set_app_config_value ${APP_ENVIRONMENT}_ENABLE_JENKINS 0
 	done
+
 
 	echo "Aplicacion añadida"
     
@@ -702,12 +706,33 @@ sub_start_jenkins() {
     fi
   done
 
+
+
+
   #Borrar los jobs que ya no existen
   for job in $( ls $APP_BASE_PATH/jenkins/jobs ); do
     if [ ! -d $BASE_PATH/bin/private/jenkins/jobs/${job} ]; then
       rm -rf $APP_BASE_PATH/jenkins/jobs/${job}
     fi
   done
+
+  #Poner las planificaciones
+  HOUR_PERIODIC_TASKS=$(get_app_config_value HOUR_PERIODIC_TASKS)
+	if [ "$APP_ENVIRONMENT" == "PRODUCCION" ]; then
+		CRON_BACKUP="0 $HOUR_PERIODIC_TASKS * * *"
+		CRON_DELETE_LOGS="45 $HOUR_PERIODIC_TASKS * * *"
+	elif [ "$APP_ENVIRONMENT" == "PREPRODUCCION" ]; then
+		CRON_BACKUP="20 $HOUR_PERIODIC_TASKS * * *"
+		CRON_DELETE_LOGS="50 $HOUR_PERIODIC_TASKS * * *"
+	elif [ "$APP_ENVIRONMENT" == "PRUEBAS" ]; then
+		CRON_BACKUP="35 $HOUR_PERIODIC_TASKS * * *"
+		CRON_DELETE_LOGS="55 $HOUR_PERIODIC_TASKS * * *"
+	else
+		echo "Entorno desconocido:$APP_ENVIRONMENT"
+		exit 1
+	fi
+	sed -i "s/<spec><\/spec>/<spec>${CRON_BACKUP}<\/spec>/g" $APP_BASE_PATH/jenkins/jobs/backup_database/config.xml
+	sed -i "s/<spec><\/spec>/<spec>${CRON_DELETE_LOGS}<\/spec>/g" $APP_BASE_PATH/jenkins/jobs/delete_logs/config.xml
 
   if [ "$REAL_HARD" == "1" ]; then
     cp -r $BASE_PATH/bin/private/jenkins/base/* $APP_BASE_PATH/jenkins
@@ -746,8 +771,8 @@ sub_start_jenkins() {
 
 	docker start jenkins-${APP_NAME}-${APP_ENVIRONMENT}
 
-	set_app_env_config_value SECRET_KEY $SECRET_KEY	
-	set_app_env_config_value ENABLE_JENKINS 1	
+	set_app_config_value ${APP_ENVIRONMENT}_SECRET_KEY $SECRET_KEY	
+	set_app_config_value ${APP_ENVIRONMENT}_ENABLE_JENKINS 1	
 
 
 
@@ -766,7 +791,7 @@ sub_stop_jenkins() {
   docker container rm jenkins-${APP_NAME}-${APP_ENVIRONMENT}
   set -e
 
-set_app_env_config_value ENABLE_JENKINS 0
+set_app_config_value ${APP_ENVIRONMENT}_ENABLE_JENKINS 0
 
   echo "Detenido Jenkins ${APP_NAME}-${APP_ENVIRONMENT}"
 }
@@ -1039,6 +1064,8 @@ sub_delete_logs() {
 }
 
 log_separators() {
+
+	echo
 	echo "***************************************************"
 	echo "***************************************************"
 	echo "***************************************************"
@@ -1046,6 +1073,7 @@ log_separators() {
 	echo "***************************************************"
 	echo "***************************************************"
 	echo "***************************************************"
+	echo
 }
 
 sub_docker_stats() {
