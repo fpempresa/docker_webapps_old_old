@@ -10,7 +10,7 @@ BASE_PATH=$ABSDIR/../../..
 PIPE=$BASE_PATH/var/pipe_send_to_server_command
 
 #Estos son las unicas ordenes que se permiten
-VALID_COMMANDS="backup_database restore_database deploy delete_logs restart restart_hard test_success test_fail"
+VALID_COMMANDS="backup_database restore_database deploy delete_logs restart restart_hard test_success test_fail docker_logs docker_stats"
 
 
 COMMAND=$1

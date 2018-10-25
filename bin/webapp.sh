@@ -1048,30 +1048,39 @@ log_separators() {
 	echo "***************************************************"
 }
 
-sub_stats_logs() {
+sub_docker_stats() {
 
 
 	echo "******************BEGIN:docker stats **************************"
 	docker stats --no-stream | head -1 | sort -k2 && docker stats --no-stream | tail -n+2 | sort -k2
-	tput init
 	echo "******************END:docker stats **************************"
 	log_separators
 
+}
+
+sub_docker_logs() {
+
 	echo "******************BEGIN:docker logs nginx-proxy **************************"
+	echo
 	docker logs nginx-proxy
-	tput init
+	echo -en "\e[0m"
+	echo
 	echo "******************END:docker logs nginx-proxy **************************"
 	log_separators
 
 	echo "******************BEGIN:docker logs letsencript **************************"
+	echo
 	docker logs letsencript
-	tput init
+	echo -en "\e[0m"
+	echo
 	echo "******************END:docker logs letsencript **************************"
 	log_separators
 
 	echo "******************BEGIN:docker logs cadvisor **************************"
+	echo
 	docker logs cadvisor
-	tput init
+	echo -en "\e[0m"
+	echo
 	echo "******************END:docker logs cadvisor **************************"
 	log_separators
 
