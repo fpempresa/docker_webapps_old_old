@@ -66,7 +66,7 @@ rm docker_images.zip
 popd
 
 echo "DEFAULT_LOGIN=${DEFAULT_LOGIN}" > $BASE_PATH/config/global.config
-echo "DEFAULT_PASSWORD=${DEFAULT_PASSWORD}" >> $BASE_PATH/config/global.config
+echo "DEFAULT_PASSWORD='${DEFAULT_PASSWORD}'" >> $BASE_PATH/config/global.config
 echo "DOMAIN_NAME_MONITOR=${DOMAIN_NAME_MONITOR}" >> $BASE_PATH/config/global.config
 
 #Crear el PIPE
