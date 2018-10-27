@@ -18,6 +18,10 @@ COMMAND=backup_database
 echo $COMMAND $SECRET_KEY $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe_send_to_server_command
 /opt/jenkins_pipe/print_pipe /opt/jenkins_pipe/pipe_response_from_server_command &quot;#_#_#_#&quot;
 
+COMMAND=restart_hard
+echo $COMMAND $SECRET_KEY $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe_send_to_server_command
+/opt/jenkins_pipe/print_pipe /opt/jenkins_pipe/pipe_response_from_server_command &quot;#_#_#_#&quot;
+
 COMMAND=restore_database
 echo $COMMAND $SECRET_KEY $APP_NAME $APP_ENVIRONMENT &gt; /opt/jenkins_pipe/pipe_send_to_server_command
 /opt/jenkins_pipe/print_pipe /opt/jenkins_pipe/pipe_response_from_server_command &quot;#_#_#_#&quot;
