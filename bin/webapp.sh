@@ -521,6 +521,7 @@ load_project_properties
   fi
 
   #Siempre se borra el directorio temp excepto la carpeta javamelody
+  shopt -s extglob
   rm -rf $APP_BASE_PATH/web_temp/!("javamelody")
 
   if [ "$REAL_HARD" == "1" ]; then
