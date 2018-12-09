@@ -546,7 +546,7 @@ load_project_properties
     --expose 8080 \
     --restart always \
     --network=webapp-${APP_NAME}-${APP_ENVIRONMENT} \
-    --hostname=webapp-${APP_NAME}-${APP_ENVIRONMENT} \
+    --hostname=tomcat-${APP_NAME}-${APP_ENVIRONMENT} \
     --mount type=bind,source="$APP_BASE_PATH/web_app",destination="/usr/local/tomcat/webapps" \
     --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/usr/local/tomcat/logs" \
     --mount type=bind,source="$APP_BASE_PATH/web_temp",destination="/usr/local/tomcat/temp" \
