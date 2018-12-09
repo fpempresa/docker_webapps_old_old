@@ -3,6 +3,9 @@
 #Falla el script si falla algun comando
 set -e
 
+#Es para permitir expresiones regulares
+shopt -s extglob
+
 #debug
 #set -x
 
@@ -521,8 +524,8 @@ load_project_properties
   fi
 
   #Siempre se borra el directorio temp excepto la carpeta javamelody
-  shopt -s extglob
   rm -rf $APP_BASE_PATH/web_temp/!("javamelody")
+
 
   if [ "$REAL_HARD" == "1" ]; then
       rm -rf $APP_BASE_PATH/web_app/*
