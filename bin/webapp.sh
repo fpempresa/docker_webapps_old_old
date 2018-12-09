@@ -362,7 +362,7 @@ sub_add(){
 
 
 	for APP_ENVIRONMENT in ${ENVIRONMENTS}; do
-		mkdir -p $BASE_PATH/apps/$APP_NAME/${APP_ENVIRONMENT}/{database,database_logs,database_backup,web_logs,web_app,jenkins,dist}
+		mkdir -p $BASE_PATH/apps/$APP_NAME/${APP_ENVIRONMENT}/{database,database_logs,database_backup,web_logs,web_app,web_temp,jenkins,dist}
 	done 
 
 
@@ -520,10 +520,13 @@ load_project_properties
     docker network connect webapp-${APP_NAME}-${APP_ENVIRONMENT} nginx-proxy
   fi
 
+  #Siempre se borra el directorio temp excepto la carpeta javamelody
+  rm -rf $APP_BASE_PATH/web_temp/!("javamelody")
 
   if [ "$REAL_HARD" == "1" ]; then
       rm -rf $APP_BASE_PATH/web_app/*
       rm -rf $APP_BASE_PATH/web_logs/*
+      rm -rf $APP_BASE_PATH/web_temp/*
 
       #Crear la app ROOT por defecto
       mkdir -p $APP_BASE_PATH/web_app/ROOT/{META-INF,WEB-INF}
@@ -541,6 +544,7 @@ load_project_properties
     --network=webapp-${APP_NAME}-${APP_ENVIRONMENT} \
     --mount type=bind,source="$APP_BASE_PATH/web_app",destination="/usr/local/tomcat/webapps" \
     --mount type=bind,source="$APP_BASE_PATH/web_logs",destination="/usr/local/tomcat/logs" \
+    --mount type=bind,source="$APP_BASE_PATH/web_temp",destination="/usr/local/tomcat/temp" \
     -e TZ=Europe/Madrid \
     -e VIRTUAL_HOST=$VIRTUAL_HOST  \
     -e VIRTUAL_PORT=8080 \
