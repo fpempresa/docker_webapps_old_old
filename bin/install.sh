@@ -42,6 +42,7 @@ apt -y update && apt -y upgrade
 
 #Software basico
 apt install -y apache2-utils zip unzip curl
+apt install denyhosts -y
 
 #Docker
 apt install -y $BASE_PATH/bin/private/docker/docker-ce_18.06.1~ce~3-0~ubuntu_amd64.deb
