@@ -839,16 +839,8 @@ sub_restore_database(){
     else
       NUMERO=$5
     fi
-  elif [ "$4" == "MES" ]; then
-    PERIODO="MES"
-	
-    if  [ "$5" == "" ]; then
-     NUMERO=$(date +%m)
-    else
-     NUMERO=$5
-    fi
   else
-    echo debe ser DIA, MES o vacio pero es $4
+    echo debe ser DIA,  o vacio pero es $4
     sub_help
     exit 1
   fi	
@@ -909,8 +901,6 @@ sub_backup_database(){
   load_project_properties
 
   FILE_NAME_DIA=${APP_NAME}-${APP_ENVIRONMENT}-DIA-$(date +%u)-backup.zip
-  FILE_NAME_MES=${APP_NAME}-${APP_ENVIRONMENT}-MES-$(date +%m)-backup.zip
- 
 
 
   rm -f $APP_BASE_PATH/database_backup/backup.sql
@@ -951,33 +941,7 @@ fi
 
 echo Fichero Subido 
     
-   mv $APP_BASE_PATH/database_backup/$FILE_NAME_DIA $APP_BASE_PATH/database_backup/$FILE_NAME_MES
-
-echo Subiendo fichero $FILE_NAME_MES
-FTP_RET_CODE=0
-ftp -inv $FTP_BACKUP_HOST <<EOF > $FTP_LOG
-user $FTP_BACKUP_USER $FTP_BACKUP_PASSWORD
-binary
-cd $FTP_BACKUP_ROOT_PATH
-delete $FILE_NAME_MES
-lcd $APP_BASE_PATH/database_backup
-put $FILE_NAME_MES
-close
-bye
-EOF
-
-rm $APP_BASE_PATH/database_backup/$FILE_NAME_MES
-
-cat $FTP_LOG
-FTP_RET_CODE=0
-cat $FTP_LOG | grep -q '^226' || FTP_RET_CODE=1
-
-rm -f $FTP_LOG
-
-if [ "$FTP_RET_CODE" == "1" ]; then
-  echo "fallo el subir el fichero"
-  exit 1
-fi
+rm $APP_BASE_PATH/database_backup/$FILE_NAME_DIA 
 
 
 echo "Backu database completado y subido"
