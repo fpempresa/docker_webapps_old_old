@@ -238,7 +238,7 @@ sub_start_proxy(){
   	--volumes-from nginx-proxy \
 	--name letsencript \
 	--restart always \
-	jrcs/letsencrypt-nginx-proxy-companion:v1.9.1
+	jrcs/letsencrypt-nginx-proxy-companion:v1.12.1
 
   docker run \
     -d \
