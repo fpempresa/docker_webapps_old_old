@@ -90,6 +90,9 @@ sed -i "s/_BASE_PATH_/$(echo $BASE_PATH | sed s/\\//\\\\\\//g)/g" /lib/systemd/s
 systemctl start docker_host_comm.service
 systemctl enable docker_host_comm.service
 
+#Reiniciar el servidor todas los domingos de madrugada
+echo '0 2 * * 0 root reboot' >> /etc/crontab
+
 #Iniciar el proxy
 $BASE_PATH/bin/webapp.sh start_proxy
 
