@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 			file = fopen(pipePath, "r");
 		} else {
 			printf("%s",line); 
-			system("git pull");
+			/* system("git pull"); */
 			sprintf(execLine,"/bin/bash -c '%s/bin/private/docker_host_comm/exec_command.sh %s' &",cwd,line); 
 			system(execLine);
 
