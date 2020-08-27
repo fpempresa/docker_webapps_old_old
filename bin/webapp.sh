@@ -918,6 +918,7 @@ FTP_LOG=$(mktemp  --tmpdir=$BASE_PATH/tmp --suffix=.ftp.log)
 
 ftp -inv $FTP_BACKUP_HOST <<EOF > $FTP_LOG 
 user $FTP_BACKUP_USER $FTP_BACKUP_PASSWORD
+passive
 binary
 cd $FTP_BACKUP_ROOT_PATH
 delete $FILE_NAME_DIA
